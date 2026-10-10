@@ -44,7 +44,7 @@ export const useCarrito = create<EstadoCarrito>()(
       vaciar: () => set({ lineas: [] }),
     }),
     {
-      name: "carrito-volta", // la clave en localStorage
+      name: "carrito-rincon", // la clave en localStorage. Cambiarla invalida los carritos guardados (ver NOTAS)
       storage: createJSONStorage(() => localStorage),
       partialize: (estado) => ({ lineas: estado.lineas }), // solo los datos, no las funciones
     }

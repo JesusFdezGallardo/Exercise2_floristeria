@@ -28,13 +28,13 @@ export function ComprarProducto({ producto }: Props) {
           <Minus />
         </Button>
         <span className="w-10 text-center tabular-nums">{agotado ? 0 : cantidad}</span>
-        <Button variant="ghost" size="icon" aria-label="Mas" disabled={agotado || cantidad >= max}
+        <Button variant="ghost" size="icon" aria-label="Más" disabled={agotado || cantidad >= max}
           onClick={() => setCantidad((c) => c + 1)}>
           <Plus />
         </Button>
       </div>
       <Button size="lg" disabled={agotado} onClick={alPulsar} className="px-6">
-        {agotado ? "Agotado" : "Anadir al carrito"}
+        {agotado ? "Agotado" : "Añadir al carrito"}
       </Button>
     </div>
   );

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Filtros } from "@/components/filtros";
 import { TarjetaProducto } from "@/components/tarjeta-producto";
 import { buscarProductos, leerFiltros, listarCategorias } from "@/lib/catalogo";
+import { TIENDA } from "@/lib/tienda";
 
 // En Next 15 searchParams es una Promise: hay que esperarla
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -14,7 +15,8 @@ export default async function Catalogo({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Catalogo</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Catálogo</h1>
+      <p className="mt-2 text-muted-foreground">{TIENDA.descripcion}</p>
       <div className="mt-6">
         <Filtros filtros={filtros} categorias={categorias} />
       </div>
@@ -31,7 +33,7 @@ export default async function Catalogo({ searchParams }: Props) {
       </p>
 
       {productos.length === 0 ? (
-        <p className="mt-16 text-center text-muted-foreground">Ningun producto coincide con la busqueda.</p>
+        <p className="mt-16 text-center text-muted-foreground">Ningún producto coincide con la búsqueda.</p>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
           {productos.map((p) => (

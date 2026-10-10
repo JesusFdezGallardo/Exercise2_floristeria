@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Cabecera } from "@/components/cabecera";
 import { Toaster } from "@/components/ui/sonner";
+import { TIENDA } from "@/lib/tienda";
 import "./globals.css";
 
 // shadcn usa la variable --font-sans: le damos la fuente Geist
@@ -21,9 +22,10 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
+// Cada pagina pone solo su parte del titulo ("Carrito") y Next anade el nombre de la tienda
 export const metadata: Metadata = {
-  title: "Tienda Volta",
-  description: "Tienda online de ejemplo del proyecto Ecommerce",
+  title: { default: TIENDA.nombre, template: `%s · ${TIENDA.nombre}` },
+  description: TIENDA.descripcion,
 };
 
 // El layout envuelve TODAS las paginas: la cabecera se pinta una vez y no se recarga al navegar

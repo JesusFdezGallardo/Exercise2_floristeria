@@ -1,4 +1,4 @@
-// Modelo de datos de la Tienda Volta.
+// Modelo de datos de la floristeria.
 // Cada "model" es una tabla; cada campo, una columna. Prisma genera el SQL y un cliente tipado.
 
 generator client {

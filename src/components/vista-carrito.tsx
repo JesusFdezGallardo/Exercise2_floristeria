@@ -15,9 +15,9 @@ export function VistaCarrito() {
   if (lineas.length === 0) {
     return (
       <div className="mt-10 flex flex-col items-center gap-4 rounded-xl border border-dashed py-16 text-center">
-        <p className="text-muted-foreground">Tu carrito esta vacio.</p>
+        <p className="text-muted-foreground">Tu carrito está vacío.</p>
         <Button render={<Link href="/" />} nativeButton={false}>
-          Ver el catalogo
+          Ver el catálogo
         </Button>
       </div>
     );
@@ -39,7 +39,7 @@ export function VistaCarrito() {
               <Minus />
             </Button>
             <span className="w-8 text-center tabular-nums">{l.cantidad}</span>
-            <Button variant="ghost" size="icon-sm" aria-label="Mas" disabled={l.cantidad >= l.stock}
+            <Button variant="ghost" size="icon-sm" aria-label="Más" disabled={l.cantidad >= l.stock}
               onClick={() => cambiarCantidad(l.id, l.cantidad + 1)}>
               <Plus />
             </Button>
@@ -56,7 +56,7 @@ export function VistaCarrito() {
           Vaciar carrito
         </Button>
         <div className="text-right">
-          <p className="text-sm text-muted-foreground">{contarArticulos(lineas)} articulos</p>
+          <p className="text-sm text-muted-foreground">{contarArticulos(lineas)} artículos</p>
           <p className="text-2xl font-bold">{formatearPrecio(calcularTotal(lineas))}</p>
         </div>
       </div>

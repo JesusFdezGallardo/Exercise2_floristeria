@@ -20,7 +20,7 @@ async function cargarProducto(idTexto: string) {
 // El titulo de la pestana del navegador sale del propio producto
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const producto = await cargarProducto((await params).id);
-  return { title: producto ? `${producto.nombre} · Tienda Volta` : "Producto no encontrado" };
+  return { title: producto ? producto.nombre : "Producto no encontrado" };
 }
 
 export default async function PaginaProducto({ params }: Props) {
@@ -31,7 +31,7 @@ export default async function PaginaProducto({ params }: Props) {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Volver al catalogo
+        ← Volver al catálogo
       </Link>
       <div className="mt-6 grid gap-10 md:grid-cols-2">
         <Image

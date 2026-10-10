@@ -14,7 +14,7 @@ export function IconoCarrito() {
   const articulos = useCarrito((s) => contarArticulos(s.lineas));
 
   return (
-    <Link href="/carrito" className="relative" aria-label={`Carrito: ${articulos} articulos`}>
+    <Link href="/carrito" className="relative" aria-label={`Carrito: ${articulos} artículos`}>
       <ShoppingBag className="size-5" />
       {articulos > 0 && (
         <span className={globo}>{articulos}</span>
