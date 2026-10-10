@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<g id="clavel"><circle r="22" fill="#C81E3A"/><g fill="#E0334F"><circle cx="18" cy="0" r="8"/><circle cx="12.7" cy="12.7" r="8"/><circle cx="0" cy="18" r="8"/><circle cx="-12.7" cy="12.7" r="8"/><circle cx="-18" cy="0" r="8"/><circle cx="-12.7" cy="-12.7" r="8"/><circle cx="0" cy="-18" r="8"/><circle cx="12.7" cy="-12.7" r="8"/></g><circle r="10" fill="#A3152D"/></g>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<path d="M150 250 L118 118 L250 168 L382 118 L350 250 Z" fill="#DDBF94"/>
+<g fill="#5E8C68"><ellipse cx="160" cy="190" rx="16" ry="44" transform="rotate(-35 160 190)"/><ellipse cx="340" cy="190" rx="16" ry="44" transform="rotate(35 340 190)"/></g>
+<g fill="#3F6B4A"><ellipse cx="190" cy="140" rx="12" ry="36" transform="rotate(-15 190 140)"/><ellipse cx="310" cy="140" rx="12" ry="36" transform="rotate(15 310 140)"/></g>
+<use href="#clavel" x="200" y="150"/><use href="#clavel" x="250" y="142"/><use href="#clavel" x="300" y="150"/>
+<use href="#clavel" x="170" y="194"/><use href="#clavel" x="225" y="190"/><use href="#clavel" x="280" y="190"/><use href="#clavel" x="332" y="194"/>
+<use href="#clavel" x="198" y="234"/><use href="#clavel" x="250" y="232"/><use href="#clavel" x="302" y="234"/>
+<path d="M138 248 L362 248 L286 456 L214 456 Z" fill="#C9A27A"/>
+<path d="M250 248 L250 456 M190 248 L232 456 M310 248 L268 456" stroke="#B08560" stroke-width="3" fill="none" opacity=".6"/>
+<g fill="#FAF6EE" stroke="#E3DACA" stroke-width="2"><ellipse cx="222" cy="326" rx="28" ry="13" transform="rotate(-18 222 326)"/><ellipse cx="278" cy="326" rx="28" ry="13" transform="rotate(18 278 326)"/><path d="M244 334 L226 382 L238 378 L248 388 Z"/><path d="M256 334 L274 382 L262 378 L252 388 Z"/><circle cx="250" cy="330" r="10"/></g>
+</svg>

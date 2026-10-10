@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<path id="petalo-lirio" d="M0 0 C14 -18 10 -48 0 -60 C-10 -48 -14 -18 0 0 Z" fill="#FFFFFF" stroke="#E3DACA" stroke-width="2"/>
+<g id="lirio"><use href="#petalo-lirio"/><use href="#petalo-lirio" transform="rotate(60)"/><use href="#petalo-lirio" transform="rotate(120)"/><use href="#petalo-lirio" transform="rotate(180)"/><use href="#petalo-lirio" transform="rotate(240)"/><use href="#petalo-lirio" transform="rotate(300)"/><circle r="6" fill="#F3E6B3"/><path d="M0 0 L-8 -22 M0 0 L8 -22 M0 0 L0 -26" stroke="#5E8C68" stroke-width="2"/><g fill="#C9832E"><circle cx="-8" cy="-22" r="3"/><circle cx="8" cy="-22" r="3"/><circle cy="-26" r="3"/></g></g>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<g fill="#3F6B4A"><ellipse cx="135" cy="320" rx="14" ry="40" transform="rotate(-60 135 320)"/><ellipse cx="365" cy="320" rx="14" ry="40" transform="rotate(60 365 320)"/></g>
+<g fill="#5E8C68"><ellipse cx="165" cy="285" rx="12" ry="34" transform="rotate(-40 165 285)"/><ellipse cx="335" cy="285" rx="12" ry="34" transform="rotate(40 335 285)"/><ellipse cx="250" cy="175" rx="12" ry="34"/></g>
+<use href="#lirio" transform="translate(250 225) scale(.9)"/>
+<use href="#lirio" transform="translate(175 290) scale(.85)"/>
+<use href="#lirio" transform="translate(325 290) scale(.85)"/>
+<use href="#lirio" transform="translate(250 315) scale(.8)"/>
+<path d="M140 362 H360 L338 424 Q250 440 162 424 Z" fill="#D8D2C4"/>
+<rect x="128" y="348" width="244" height="18" rx="9" fill="#C4BDAE"/>
+</svg>

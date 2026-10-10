@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<g id="tulipan"><path d="M0 0 V90" stroke="#3F6B4A" stroke-width="6"/><path d="M-22 0 C-26 -28 -14 -44 -6 -36 L0 -46 L6 -36 C14 -44 26 -28 22 0 C14 12 -14 12 -22 0 Z" fill="currentColor"/><path d="M0 -40 C-8 -24 -8 -8 0 6 C8 -8 8 -24 0 -40 Z" fill="#000" opacity=".12"/></g>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<path d="M150 250 L118 118 L250 168 L382 118 L350 250 Z" fill="#DDBF94"/>
+<g fill="#5E8C68"><ellipse cx="165" cy="200" rx="14" ry="48" transform="rotate(-25 165 200)"/><ellipse cx="335" cy="200" rx="14" ry="48" transform="rotate(25 335 200)"/></g>
+<use href="#tulipan" x="190" y="170" color="#E8467C"/><use href="#tulipan" x="250" y="150" color="#F5B700"/><use href="#tulipan" x="310" y="170" color="#D7263D"/>
+<use href="#tulipan" x="160" y="218" color="#A86BC9"/><use href="#tulipan" x="220" y="208" color="#F28FB0"/><use href="#tulipan" x="280" y="208" color="#F26B3A"/><use href="#tulipan" x="340" y="218" color="#E8467C"/>
+<path d="M138 248 L362 248 L286 456 L214 456 Z" fill="#C9A27A"/>
+<path d="M250 248 L250 456 M190 248 L232 456 M310 248 L268 456" stroke="#B08560" stroke-width="3" fill="none" opacity=".6"/>
+<g fill="#A86BC9"><ellipse cx="222" cy="326" rx="28" ry="13" transform="rotate(-18 222 326)"/><ellipse cx="278" cy="326" rx="28" ry="13" transform="rotate(18 278 326)"/><path d="M244 334 L226 382 L238 378 L248 388 Z"/><path d="M256 334 L274 382 L262 378 L252 388 Z"/><circle cx="250" cy="330" r="10"/></g>
+</svg>
