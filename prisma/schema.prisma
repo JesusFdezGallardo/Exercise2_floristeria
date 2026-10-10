@@ -1,0 +1,69 @@
+// Modelo de datos de la Tienda Volta.
+// Cada "model" es una tabla; cada campo, una columna. Prisma genera el SQL y un cliente tipado.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Una categoria agrupa muchos productos (relacion 1 a N)
+model Categoria {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique
+  slug      String     @unique // para la URL: /?categoria=audio
+  productos Producto[]
+}
+
+model Producto {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  slug        String   @unique
+  descripcion String
+  precio      Int // en CENTIMOS: 4990 = 49,90 EUR (nunca decimales para dinero)
+  imagen      String // ruta en /public o URL
+  stock       Int      @default(0)
+  creadoEn    DateTime @default(now())
+
+  categoria   Categoria     @relation(fields: [categoriaId], references: [id])
+  categoriaId Int
+  lineas      LineaPedido[]
+
+  @@index([categoriaId])
+}
+
+enum EstadoPedido {
+  PENDIENTE // creado al ir a pagar
+  PAGADO // lo marca el WEBHOOK de Stripe (Sesion 3)
+  ENVIADO // lo marca el admin (Sesion 4)
+  ENTREGADO
+  CANCELADO
+}
+
+model Pedido {
+  id              Int           @id @default(autoincrement())
+  email           String
+  estado          EstadoPedido  @default(PENDIENTE)
+  total           Int // en centimos
+  stripeSessionId String?       @unique // enlaza el pedido con el pago en Stripe
+  creadoEn        DateTime      @default(now())
+  actualizadoEn   DateTime      @updatedAt
+  lineas          LineaPedido[]
+}
+
+// Tabla intermedia: que productos lleva cada pedido, cuantos y a que precio
+model LineaPedido {
+  id             Int @id @default(autoincrement())
+  cantidad       Int
+  precioUnitario Int // se copia al comprar: si luego cambia el precio, el pedido no cambia
+
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  pedidoId   Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  productoId Int
+
+  @@index([pedidoId])
+}

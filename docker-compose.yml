@@ -1,0 +1,25 @@
+# ALTERNATIVA LOCAL (no se usa en clase): PostgreSQL en Docker para desarrollo.
+# En clase usamos Neon (Postgres gestionado, free tier) porque no todos podeis instalar Docker.
+# Si tienes Docker:  docker compose up -d   y en .env:
+#   DATABASE_URL="postgresql://tienda:tienda@localhost:5432/tienda"
+#   DIRECT_URL="postgresql://tienda:tienda@localhost:5432/tienda"
+services:
+  db:
+    image: postgres:17-alpine        # imagen oficial, version ligera
+    container_name: tienda-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tienda          # usuario de la base de datos
+      POSTGRES_PASSWORD: tienda      # contrasena SOLO para desarrollo local
+      POSTGRES_DB: tienda            # base de datos que se crea al arrancar
+    ports:
+      - "5432:5432"                  # puerto del portatil : puerto del contenedor
+    volumes:
+      - datos_pg:/var/lib/postgresql/data   # los datos sobreviven a reinicios
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tienda -d tienda"]
+      interval: 5s
+      retries: 5
+
+volumes:
+  datos_pg:
