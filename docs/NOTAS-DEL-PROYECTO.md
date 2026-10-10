@@ -1,7 +1,32 @@
 # Notas del proyecto · lo que conviene saber antes de cambiar algo
 
-Las cosas de la Tienda Volta que no son evidentes leyendo el codigo por encima. Cada nota dice **donde** esta,
-**por que** es asi y **que tocar** si lo quieres cambiar. Se va ampliando a medida que se trabaja en el proyecto.
+Las cosas de El Rincón de las Flores que no son evidentes leyendo el código por encima. Cada nota dice **dónde** está,
+**por qué** es así y **qué tocar** si lo quieres cambiar. Se va ampliando a medida que se trabaja en el proyecto.
+
+---
+
+## Marca de la tienda
+
+| Qué | Dónde | Cómo cambiarlo |
+|---|---|---|
+| Nombre y descripción | `src/lib/tienda.ts` (`TIENDA`) | Cambia el texto ahí; el título de las pestañas, la cabecera, el catálogo, la entrada del admin y el email lo leen de ahí. `tests/marca.test.ts` falla si alguien lo escribe en otro archivo de `src/`. |
+| Colores | `src/app/globals.css`, bloque `:root` | Están en oklch con su hex al lado. El verde es `--primary`; el crema, `--background`. Comprueba el contraste (4,5:1 mínimo para texto). |
+| Fuentes | `src/app/layout.tsx` + `globals.css` | Geist para el texto; Fraunces para `h1`-`h3` (regla en `@layer base` y `--font-heading` en `@theme`). |
+| Logo | `src/components/logo.tsx` y `src/app/icon.svg` | Son el mismo dibujo: si cambias uno, cambia el otro. `icon.svg` es el icono de la pestaña. |
+| Ilustraciones | `public/productos/<slug>.svg` | Una por producto, con el nombre igual al slug. Para añadir un producto: entrada en `prisma/catalogo-datos.ts` + su SVG. `tests/imagenes.test.ts` falla si falta o sobra alguna. |
+| Catálogo | `prisma/catalogo-datos.ts` | Los datos del seed, en céntimos. `npm run seed` los recarga, pero **borra también los pedidos**. |
+
+**Claves que cambiaron al pasar de Volta a la floristería:**
+- El carrito del navegador se guarda con la clave `carrito-rincon` (`src/store/carrito.ts`). Se cambió porque el seed
+  reinicia los ids: un carrito antiguo con el id 1 habría mostrado un producto de Volta y Stripe habría cobrado el ramo
+  que ahora tiene ese id. **Si algún día vuelves a recargar el catálogo con otros productos en producción**, cambia otra
+  vez esta clave.
+- La cookie del admin se llama `admin_rincon` y su huella usa la sal `rincon-flores:` (`src/lib/admin.ts`). Cambiar
+  cualquiera de las dos cierra la sesión de todos los admins.
+
+**Limitación conocida: la búsqueda distingue tildes.** Buscar "peonias" no encuentra "Ramo de peonías rosas", porque
+`contains` con `mode: "insensitive"` ignora mayúsculas pero no tildes. Arreglarlo pide la extensión `unaccent` de
+PostgreSQL (una migración) o guardar una columna con el nombre sin tildes. Por ahora, solo "peonías" lleva tilde.
 
 ---
 
@@ -52,7 +77,7 @@ No llega ningun evento: el pedido sigue PENDIENTE y el stock no se toca. Si el c
 ### Precios
 Siempre en **centimos** (`Int`): en la base de datos, en el carrito y en Stripe (`unit_amount`). Solo se convierten a
 euros al pintarlos (`src/lib/formato.ts`) y al leer los filtros de precio del catalogo, donde el usuario escribe euros
-y `catalogo.ts` multiplica por 100.
+y `catalogo.ts` multiplica por 100. Los datos del seed también están en céntimos, y `tests/catalogo-datos.test.ts` comprueba que ninguno se ha escrito en euros.
 
 ---
 

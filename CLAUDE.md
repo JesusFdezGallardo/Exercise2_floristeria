@@ -3,7 +3,8 @@
 Contexto para el asistente de codigo. Leelo antes de tocar nada.
 
 ## Proyecto
-Tienda online "Tienda Volta" (ficticia, material de clase). La especificacion esta en `docs/ESPECIFICACION.md`.
+Tienda online "El Rincon de las Flores": floristeria de barrio (ramos y centros de mesa), adaptada de la plantilla
+Tienda Volta del curso. La especificacion esta en `docs/ESPECIFICACION.md`.
 Las particularidades (decisiones no evidentes y donde tocar) estan en `docs/NOTAS-DEL-PROYECTO.md`: mantenlas al dia.
 
 ## Stack
