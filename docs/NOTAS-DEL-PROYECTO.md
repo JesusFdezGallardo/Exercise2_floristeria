@@ -10,7 +10,7 @@ Las cosas de El Rincón de las Flores que no son evidentes leyendo el código po
 | Qué | Dónde | Cómo cambiarlo |
 |---|---|---|
 | Nombre y descripción | `src/lib/tienda.ts` (`TIENDA`) | Cambia el texto ahí; el título de las pestañas, la cabecera, el catálogo, la entrada del admin y el email lo leen de ahí. `tests/marca.test.ts` falla si alguien lo escribe en otro archivo de `src/`. |
-| Colores | `src/app/globals.css`, bloque `:root` | Están en oklch con su hex al lado. El verde es `--primary`; el crema, `--background`. Comprueba el contraste (4,5:1 mínimo para texto). |
+| Colores | `src/app/globals.css`, bloque `:root` | Están en oklch con su hex al lado. El verde es `--primary`; el crema, `--background`. `tests/tema.test.ts` comprueba el contraste AA (4,5:1) de las combinaciones de texto; el rojo (`--destructive`) se oscureció por eso. |
 | Fuentes | `src/app/layout.tsx` + `globals.css` | Geist para el texto; Fraunces para `h1`-`h3` (regla en `@layer base` y `--font-heading` en `@theme`). |
 | Logo | `src/components/logo.tsx` y `src/app/icon.svg` | Son el mismo dibujo: si cambias uno, cambia el otro. `icon.svg` es el icono de la pestaña. |
 | Ilustraciones | `public/productos/<slug>.svg` | Una por producto, con el nombre igual al slug. Para añadir un producto: entrada en `prisma/catalogo-datos.ts` + su SVG. `tests/imagenes.test.ts` falla si falta o sobra alguna. |
@@ -99,7 +99,7 @@ la funcion `urlCon`, un `<input type="hidden">` dentro del formulario y su lectu
 ---
 
 ## Carrito
-- Vive solo en el navegador (`localStorage`, clave `carrito-volta`, `src/store/carrito.ts`). No hay carrito en la base
+- Vive solo en el navegador (`localStorage`, clave `carrito-rincon`, `src/store/carrito.ts`). No hay carrito en la base
   de datos ni cuentas de cliente.
 - Guarda una **copia** del precio y del stock del momento en que se anadio. Por eso el checkout **no se fia** de esos
   datos: vuelve a leer precio y stock de la base de datos. Si cambias precios, el carrito puede mostrar el viejo hasta

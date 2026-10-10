@@ -47,4 +47,10 @@ describe("marca de la tienda", () => {
   it("la cookie del admin tiene nombre nuevo", () => {
     expect(COOKIE_ADMIN).toBe("admin_rincon");
   });
+
+  it("las notas del proyecto citan la clave actual del carrito, no la de Volta", () => {
+    const notas = readFileSync(join(raiz, "docs", "NOTAS-DEL-PROYECTO.md"), "utf8");
+    expect(notas).toContain("carrito-rincon");
+    expect(notas).not.toContain("carrito-volta");
+  });
 });

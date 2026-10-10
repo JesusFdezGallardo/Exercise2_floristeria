@@ -64,7 +64,7 @@
   --muted-foreground: oklch(0.511 0.026 151.2); /* #5C6B5F: 5,2:1 sobre crema */
   --accent: oklch(0.941 0.02 87.5);
   --accent-foreground: oklch(0.272 0.021 153.3);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.51 0.2 27.3); /* #BE1218: el rojo de shadcn no llegaba a 4,5:1 en "Agotado" sobre crema */
   --border: oklch(0.891 0.024 82.1); /* #E3DACA */
   --input: oklch(0.891 0.024 82.1);
   --ring: oklch(0.486 0.072 151);
