@@ -1,12 +1,14 @@
-// Middleware: se ejecuta ANTES de cada peticion a /admin. Si no hay cookie de admin valida, a la pagina de entrada.
+// Middleware: antes de /admin y /cuenta comprueba que HAYA COOKIE de sesion; si no, a /entrar y de vuelta aqui.
+// No puede usar la BD: que la sesion sea valida y el rol lo comprueban la pagina y cada Server Action.
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE_ADMIN, esAdmin } from "@/lib/admin";
+import { COOKIE_SESION } from "@/lib/cuentas";
 
-export async function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname === "/admin/entrar") return NextResponse.next();
-  if (await esAdmin(req.cookies.get(COOKIE_ADMIN)?.value)) return NextResponse.next();
-  return NextResponse.redirect(new URL("/admin/entrar", req.url));
+export function middleware(req: NextRequest) {
+  if (req.cookies.has(COOKIE_SESION)) return NextResponse.next();
+  const entrar = new URL("/entrar", req.url);
+  entrar.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
+  return NextResponse.redirect(entrar);
 }
 
-// Solo para las rutas del panel: el resto de la tienda no pasa por aqui
-export const config = { matcher: ["/admin/:path*"] };
+// Solo para las rutas privadas: el resto de la tienda no pasa por aqui
+export const config = { matcher: ["/admin/:path*", "/cuenta/:path*"] };
