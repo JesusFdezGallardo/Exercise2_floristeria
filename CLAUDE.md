@@ -31,15 +31,22 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
   hay que darlo de alta fuera del código en dos sitios: `stripe listen --events ...` y el destino del webhook en Stripe.
 - **Solo claves de test:** `src/lib/stripe.ts` lanza un error si `STRIPE_SECRET_KEY` no empieza por `sk_test_`.
 - **Estados del admin** en `TRANSICIONES_ADMIN` (`src/lib/estados.ts`), con su test en `tests/reglas.test.ts`.
-- **Admin:** contraseña `ADMIN_PASSWORD` + cookie `admin_rincon` con huella SHA-256 (`src/lib/admin.ts`). El
-  middleware protege las páginas, no las acciones: cada Server Action de admin vuelve a llamar a `esAdmin`.
+- **Cuentas propias (email + contraseña):** contraseñas con scrypt (`src/lib/contrasenas.ts`); sesión con un token
+  aleatorio en la cookie `sesion_rincon` y su SHA-256 en la tabla `Sesion` (`src/lib/sesion.ts`). `usuarioActual()` y
+  `exigirAdmin()` leen el usuario y su **rol de la BD**. El middleware solo exige que exista la cookie en `/admin` y
+  `/cuenta`: cada página y cada Server Action de admin vuelven a comprobar la sesión y el rol.
+- **El admin se crea solo con `npm run crear-admin -- <email>`** (`--produccion` para la tienda publicada). La web
+  solo crea clientes. Después de `npm run seed` hay que volver a crearlo.
+- **Pagar exige sesión:** `crearCheckout` devuelve `necesitaLogin` sin usuario; el pedido nace con `usuarioId` y el
+  email de la cuenta (`customer_email` en Stripe). El webhook ya no sobrescribe el email (salvo pedidos sin dueño).
 - **La marca en un solo sitio:** el nombre está solo en `src/lib/tienda.ts` (`tests/marca.test.ts` falla si aparece
   en otro archivo de `src/`, o escrito sin tilde en `src`, `prisma` o `public`, aunque sea en un comentario);
   los colores, en `:root` de `src/app/globals.css` (`tests/tema.test.ts` exige contraste AA).
 - **Catálogo:** datos en `prisma/catalogo-datos.ts` (en céntimos) y una ilustración por producto en
   `public/productos/<slug>.svg` (`tests/imagenes.test.ts` comprueba que no falte ni sobre ninguna).
-- **`npm run seed` borra también los pedidos** y reinicia los ids. Si se recarga otro catálogo en producción, cambia
-  la clave del carrito (`carrito-rincon` en `src/store/carrito.ts`) para que los carritos viejos no apunten a otro producto.
+- **`npm run seed` borra también los pedidos, usuarios y sesiones** y reinicia los ids. Si se recarga otro catálogo en
+  producción, cambia la clave del carrito (`CLAVE_CARRITO` = `carrito-rincon` en `src/store/carrito.ts`; con sesión,
+  cada usuario usa `carrito-rincon:<id>`) para que los carritos viejos no apunten a otro producto.
 - **Filtros del catálogo en la URL:** un parámetro nuevo se conserva en tres sitios (`urlCon` y un `input hidden` en
   `src/components/filtros.tsx`, y `leerFiltros` en `src/lib/catalogo.ts`).
 - **Dos páginas 404:** la general (`src/app/not-found.tsx`) y la de la ficha (`src/app/producto/[id]/not-found.tsx`),
@@ -78,6 +85,7 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
 - `stripe listen --events checkout.session.completed,checkout.session.expired --forward-to localhost:3000/api/webhooks/stripe` (webhook en local)
 - `npx prisma migrate dev` aplica cambios del schema en desarrollo; `npx prisma studio` abre el visor de tablas
 - `npm run migrar:produccion` aplica las migraciones pendientes a la base de producción
-- `npm run seed` rellena la base de datos de desarrollo con el catálogo (y borra sus pedidos)
+- `npm run seed` rellena la base de datos de desarrollo con el catálogo (y borra sus pedidos, usuarios y sesiones)
+- `npm run crear-admin -- <email> [--produccion]` crea o asciende un administrador (pide la contraseña)
 - `npm run db:check`, `npm run stripe:check`, `npx tsx scripts/ver-pedidos.ts`: comprobaciones rápidas
 - `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`

@@ -21,8 +21,8 @@ Las cosas de El Rincón de las Flores que no son evidentes leyendo el código po
   reinicia los ids: un carrito antiguo con el id 1 habría mostrado un producto de Volta y Stripe habría cobrado el ramo
   que ahora tiene ese id. **Si algún día vuelves a recargar el catálogo con otros productos en producción**, cambia otra
   vez esta clave.
-- La cookie del admin se llama `admin_rincon` y su huella usa la sal `rincon-flores:` (`src/lib/admin.ts`). Cambiar
-  cualquiera de las dos cierra la sesión de todos los admins.
+- La cookie de sesión se llama `sesion_rincon` (`COOKIE_SESION` en `src/lib/cuentas.ts`). Cambiarla cierra la sesión
+  de todo el mundo. (La antigua cookie del admin, `admin_rincon`, desapareció con las cuentas.)
 
 **La búsqueda no distingue tildes ni mayúsculas.** "peonias", "PEONÍAS" y "peonías" encuentran "Ramo de peonías rosas".
 Ver la sección *Búsqueda sin tildes* en Catálogo.
@@ -126,21 +126,56 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 ---
 
 ## Carrito
-- Vive solo en el navegador (`localStorage`, clave `carrito-rincon`, `src/store/carrito.ts`). No hay carrito en la base
-  de datos ni cuentas de cliente.
+- **Qué es Zustand:** una librería pequeña de estado compartido en el navegador. `src/store/carrito.ts` define el store
+  (las `lineas` y las acciones `anadir`, `cambiarCantidad`, `quitar`, `vaciar`) y cualquier componente lo usa con
+  `useCarrito()`, sin Provider ni Context: el icono de la cabecera, la ficha y `/carrito` se repintan solos. Se eligió
+  por eso: menos código que un Context y un selector (`useCarrito((s) => ...)`) que evita repintados de más.
+- **`persist`** copia el estado en `localStorage`. Hay **un carrito por identidad**: `carrito-rincon` sin sesión y
+  `carrito-rincon:<usuarioId>` con sesión. No hay carrito en la base de datos ni se sincroniza entre dispositivos.
+- El store se crea con `skipHydration`: no se carga solo. Lo carga `SincronizarCarrito` (en el layout), que recibe el
+  `usuarioId` del servidor. **Al entrar o registrarse**, suma el carrito anónimo al del usuario (`juntarCarritos`:
+  mismo producto = una línea, sin pasar del stock) y borra el anónimo. **Al salir**, carga el anónimo (vacío); el del
+  usuario queda guardado en ese navegador.
 - Guarda una **copia** del precio y del stock del momento en que se añadió. Por eso el checkout **no se fía** de esos
   datos: vuelve a leer precio y stock de la base de datos. Si cambias precios, el carrito puede mostrar el viejo hasta
   que se pague; Stripe cobrará el nuevo.
 - Si cambias la forma de `LineaCarrito`, los carritos guardados con la forma antigua siguen en el navegador de la gente.
-  Para invalidarlos, cambia `name` en `persist` (o usa `version` + `migrate` de Zustand).
+  Para invalidarlos, cambia `CLAVE_CARRITO` (o usa `version` + `migrate` de Zustand).
+
+---
+
+## Cuentas
+- Email y contraseña, gestionados por la tienda (sin servicios externos ni dependencias). El email hace de nombre de
+  usuario. Registro en `/registro` (siempre CLIENTE), entrada en `/entrar`; las acciones están en `src/app/entrar/actions.ts`.
+- **Contraseñas:** scrypt de `node:crypto` con una sal aleatoria por usuario; se guarda `sal:hash` en hexadecimal y se
+  compara con `timingSafeEqual` (`src/lib/contrasenas.ts`). Entre 8 y 200 caracteres (el máximo evita scrypt con textos
+  enormes).
+- **Sesión:** al entrar se genera un token aleatorio de 32 bytes. Va en la cookie `httpOnly` `sesion_rincon` (30 días) y
+  en la tabla `Sesion` se guarda **su SHA-256**, no el token: quien lea la BD no puede fabricar cookies. "Salir" borra
+  la fila, así que la cookie deja de valer aunque alguien la hubiera copiado.
+- `usuarioActual()` va envuelto en `cache()` de React: layout, cabecera y página lo piden en la misma petición y la BD
+  se consulta una vez. Devuelve el usuario **sin** el hash de la contraseña (`omit`).
+- "Email o contraseña incorrectos" sale igual si el email no existe o si la contraseña está mal, y en los dos casos se
+  calcula un scrypt: así no se puede averiguar quién tiene cuenta.
+- `destinoSeguro` solo deja volver (`callbackUrl`) a rutas de la tienda.
+- Pagar exige sesión. Sin ella, el botón del carrito lleva a `/entrar?callbackUrl=/carrito`, para que el cliente vea
+  el carrito ya sumado antes de pagar.
+- "Mis pedidos" (`/cuenta/pedidos`) muestra los pedidos con `usuarioId` del usuario. Un pedido ajeno da **404**. Los
+  pedidos de antes de las cuentas no tienen dueño y solo los ve el admin.
+- **Tras una migración, reinicia `npm run dev`:** `src/lib/prisma.ts` guarda el cliente en `globalThis` y el servidor
+  que ya estaba abierto no conoce las tablas nuevas (`Cannot read properties of undefined (reading 'findUnique')`).
+- **Pendiente (fuera de alcance):** limitar los intentos de login, recuperar o cambiar la contraseña desde la web y
+  verificar el email.
 
 ---
 
 ## Admin
-- La protección es sencilla, pensada para una demo: una contraseña (`ADMIN_PASSWORD`) y una cookie con su huella
-  SHA-256 (`src/lib/admin.ts`). **Cambiar la contraseña cierra todas las sesiones**, porque la huella deja de coincidir.
-- El middleware (`src/middleware.ts`) protege **las páginas** de `/admin`, pero **no las Server Actions**: cada acción
-  de `src/app/admin/actions.ts` vuelve a comprobar `esAdmin`. Si añades una acción de admin, tiene que hacer lo mismo.
+- Es admin quien tiene `Usuario.rol = ADMIN` en la BD. Solo se pone con `npm run crear-admin -- <email>`
+  (`--produccion` usa `.env.produccion`): crea la cuenta o asciende una existente, le pone la contraseña que se
+  escribe en la terminal y cierra sus sesiones abiertas. Para quitar el rol, Prisma Studio.
+- El middleware (`src/middleware.ts`) solo exige que exista la cookie en `/admin`. La sesión y el rol los comprueban
+  las páginas (sin rol: `SinAcceso`) y **cada Server Action** de `src/app/admin/actions.ts` con `exigirAdmin()`. Si
+  añades una acción de admin, tiene que hacer lo mismo.
 - **Toda la fila de la lista abre el pedido** (`src/app/admin/page.tsx`): el enlace del número lleva un `::after`
   absoluto que se estira sobre la fila (`relative`), sin JavaScript en el navegador. Si añades un botón o un enlace
   dentro de una fila, el `::after` lo taparía: dale `relative z-10` para que quede por encima.

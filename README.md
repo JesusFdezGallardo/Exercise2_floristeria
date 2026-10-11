@@ -19,12 +19,14 @@ cualquier CVC; no se cobra nada)
 |---|---|
 | `/` | **Catálogo** de 10 ramos y centros en 4 ocasiones (Amor, Celebraciones, Condolencias, Para casa), con búsqueda por nombre (sin distinguir tildes ni mayúsculas: "peonias" encuentra "peonías"), filtros de ocasión y precio, y orden por precio o nombre. Todo se resuelve en el servidor y vive en la URL, así que cualquier búsqueda se puede compartir. |
 | `/producto/[id]` | **Ficha** con ilustración, descripción, precio, stock y distintivo de "Agotado" (botón desactivado). Si el producto no existe, su propia 404: "No encontramos ese producto". |
-| `/carrito` | **Carrito** con Zustand: cambiar cantidades, quitar productos y total. Sobrevive a recargar y a cerrar el navegador (localStorage). |
+| `/carrito` | **Carrito** con Zustand: cambiar cantidades, quitar productos y total. Sobrevive a recargar y a cerrar el navegador (localStorage), con un carrito por cuenta; al entrar, lo que había sin sesión se suma. |
+| `/entrar` y `/registro` | **Cuentas** con email y contraseña (scrypt, sesión en una cookie `httpOnly`). Entrar es opcional para mirar, obligatorio para pagar. |
+| `/cuenta/pedidos` | **Mis pedidos**: historial del cliente y detalle de cada pedido (los de otra cuenta dan 404). |
 | Botón "Pagar" | **Checkout** con una Server Action: crea el pedido PENDIENTE releyendo precios y stock de la base de datos (nunca del navegador) y redirige a la página de pago de Stripe. |
 | `/checkout/exito` | Muestra el pedido y su estado. Dice "Pago confirmado" solo cuando el webhook ya lo ha marcado como pagado; si aún no, lo dice con honestidad. |
 | `/checkout/cancelado` | El cliente volvió sin pagar: no se cobra nada y el carrito sigue guardado. |
 | Cualquier otra ruta | 404 general: "No encontramos esa página", con enlace al catálogo. |
-| `/admin` | **Panel de la floristería**, con contraseña: pedidos filtrados por estado (toda la fila abre el pedido) y ficha de cada pedido para avanzarlo (pagado → enviado → entregado) o cancelar uno que se quedó sin pagar. |
+| `/admin` | **Panel de la floristería**, solo para cuentas con rol ADMIN (se crean con `npm run crear-admin`): pedidos filtrados por estado (toda la fila abre el pedido) y ficha de cada pedido para avanzarlo (pagado → enviado → entregado) o cancelar uno que se quedó sin pagar. |
 
 ### Lo que pasa por detrás
 
@@ -44,7 +46,7 @@ cualquier CVC; no se cobra nada)
 | **Webhook de Stripe** (entrante) | Que Stripe avise de `checkout.session.completed` y `checkout.session.expired` | Stripe llama a la tienda tras cada pago o caducidad | `src/app/api/webhooks/stripe/route.ts` | `STRIPE_WEBHOOK_SECRET` (verifica la firma) |
 | **Resend** | Email de confirmación del pedido | Solo desde el webhook, tras marcar el pedido como pagado | `src/lib/email.ts` | `RESEND_API_KEY`, `EMAIL_PRUEBAS` (sin dominio propio, todos los emails van ahí) |
 | **Google Fonts** | Fuentes Geist (texto) y Fraunces (títulos) | Solo al compilar: `next/font` las descarga y las sirve la propia web | `src/app/layout.tsx` | — |
-| **Vercel** | Alojamiento y despliegue automático en cada push a `main` | Siempre (hosting) | — | Las de arriba, más `ADMIN_PASSWORD` |
+| **Vercel** | Alojamiento y despliegue automático en cada push a `main` | Siempre (hosting) | — | Las de arriba |
 | **GitHub Actions** | CI: lint, tipos, tests y build en cada push | En cada push | `.github/workflows/ci.yml` | Claves ficticias: no se conecta a nada |
 
 El navegador del cliente solo habla con la tienda y con la página de pago de Stripe: ninguna clave secreta sale del servidor.
@@ -88,7 +90,8 @@ producción.
 npm install                 # dependencias + cliente de Prisma
 cp .env.example .env        # y rellena los valores
 npx prisma migrate deploy   # crea las tablas
-npm run seed                # 4 ocasiones y 10 ramos y centros (borra los pedidos)
+npm run seed                # 4 ocasiones y 10 ramos y centros (borra pedidos, usuarios y sesiones)
+npm run crear-admin -- tu@email.com   # tu cuenta de administrador (pide la contraseña)
 npm run dev                 # http://localhost:3000
 # en otra terminal: reenviar los eventos de Stripe al webhook local
 stripe listen --events checkout.session.completed,checkout.session.expired --forward-to localhost:3000/api/webhooks/stripe
@@ -104,13 +107,15 @@ código que necesita la migración.
 
 1. Importa el repositorio en Vercel (Next.js se detecta solo; `postinstall` genera el cliente de Prisma).
 2. Variables de entorno: `DATABASE_URL`, `DIRECT_URL`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
-   `RESEND_API_KEY`, `EMAIL_PRUEBAS`, `ADMIN_PASSWORD`.
+   `RESEND_API_KEY`, `EMAIL_PRUEBAS`.
 3. En Stripe (Workbench > Webhooks > Add destination): eventos `checkout.session.completed` y `checkout.session.expired`,
    y URL `https://TU-DOMINIO/api/webhooks/stripe`. Copia su signing secret como `STRIPE_WEBHOOK_SECRET` en Vercel y
    redespliega. Ese secreto es distinto del que imprime `stripe listen` en local.
 4. Comprueba que las claves de Stripe en Vercel son las de **test** (`sk_test_`, `pk_test_`): con una `sk_live_` la
    tienda se niega a arrancar el pago, a propósito.
-5. Usa el dominio de producción (`*.vercel.app` sin hash): las URLs de cada despliegue están protegidas por Vercel.
+5. Crea el administrador en la base de producción: `npm run migrar:produccion` y después
+   `npm run crear-admin -- <email> --produccion` (pide la contraseña).
+6. Usa el dominio de producción (`*.vercel.app` sin hash): las URLs de cada despliegue están protegidas por Vercel.
 
 ## Estructura
 
@@ -119,7 +124,9 @@ src/app/                 páginas: catálogo, producto/[id], carrito, checkout (
 src/app/checkout/        Server Action del checkout
 src/app/api/webhooks/    webhook de Stripe (la única API route)
 src/components/          cabecera, logo, tarjetas, filtros, carrito, admin (y ui/ de shadcn)
-src/lib/                 tienda (nombre), prisma, stripe, email, catálogo, orden, estados, admin, formato
+src/lib/                 tienda (nombre), prisma, stripe, email, catálogo, orden, estados, formato,
+                         cuentas (reglas), contrasenas (scrypt y huella del token), sesion (usuario actual)
+scripts/crear-admin.ts   crea o asciende un administrador
 src/store/carrito.ts     carrito con Zustand + persist
 prisma/                  schema, migraciones, datos del catálogo y seed
 public/productos/        ilustraciones SVG de los productos
