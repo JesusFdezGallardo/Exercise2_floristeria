@@ -11,6 +11,7 @@
     "seed": "prisma db seed",
     "db:check": "tsx scripts/comprobar-db.ts",
     "stripe:check": "tsx scripts/comprobar-stripe.ts",
+    "crear-admin": "tsx scripts/crear-admin.ts",
     "test": "vitest run",
     "migrar:produccion": "node --env-file=.env.produccion node_modules/prisma/build/index.js migrate deploy"
   },
