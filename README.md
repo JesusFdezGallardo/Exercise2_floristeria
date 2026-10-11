@@ -4,7 +4,7 @@ Floristería de barrio con tienda online completa: catálogo de ramos y centros 
 ocasión y precio y orden; carrito persistente; pago con Stripe confirmado por **webhook**; email de confirmación; y
 panel para gestionar los pedidos. Desplegada en Vercel con CI.
 
-**Demo:** URL_DE_LA_DEMO (Stripe en modo test: usa la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
+**Demo:** https://exercise2-floristeria.vercel.app (Stripe en modo test: usa la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
 cualquier CVC; no se cobra nada)
 
 > Proyecto final del Master Desarrollo Agéntico (The Power), adaptado de la plantilla Tienda Volta del curso.
