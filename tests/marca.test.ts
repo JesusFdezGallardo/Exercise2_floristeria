@@ -3,7 +3,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { COOKIE_ADMIN } from "../src/lib/admin";
 import { TIENDA } from "../src/lib/tienda";
 
 // Todos los archivos de texto de una carpeta, sin entrar en el cliente generado de Prisma
@@ -49,10 +48,6 @@ describe("marca de la tienda", () => {
     const { useCarrito } = await import("../src/store/carrito");
     expect(useCarrito.persist.getOptions().name).toBe("carrito-rincon");
     vi.unstubAllGlobals();
-  });
-
-  it("la cookie del admin tiene nombre nuevo", () => {
-    expect(COOKIE_ADMIN).toBe("admin_rincon");
   });
 
   it("las notas del proyecto citan la clave actual del carrito, no la de Volta", () => {

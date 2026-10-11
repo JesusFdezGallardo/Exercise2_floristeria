@@ -1,14 +1,15 @@
 // Panel de admin: lista de pedidos con filtro por estado (en la URL, como el catalogo).
 import type { Metadata } from "next";
 import Link from "next/link";
-import { salir } from "@/app/admin/actions";
+import { redirect } from "next/navigation";
 import { BadgeEstado } from "@/components/badge-estado";
-import { Button } from "@/components/ui/button";
+import { SinAcceso } from "@/components/sin-acceso";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { EstadoPedido } from "@/generated/prisma/enums";
 import { ESTADOS, ETIQUETA } from "@/lib/estados";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Pedidos · Admin" };
 export const dynamic = "force-dynamic";
@@ -18,6 +19,11 @@ type Props = { searchParams: Promise<{ estado?: string }> };
 const fecha = new Intl.DateTimeFormat("es-ES", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Madrid" });
 
 export default async function PanelPedidos({ searchParams }: Props) {
+  // La cookie ya la exige el middleware; aqui se comprueba que la sesion es valida y que el rol es ADMIN
+  const usuario = await usuarioActual();
+  if (!usuario) redirect("/entrar?callbackUrl=/admin");
+  if (usuario.rol !== "ADMIN") return <SinAcceso />;
+
   const { estado } = await searchParams;
   const filtro = ESTADOS.includes(estado as EstadoPedido) ? (estado as EstadoPedido) : undefined;
 
@@ -33,12 +39,7 @@ export default async function PanelPedidos({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
-        <form action={salir}>
-          <Button variant="outline" size="sm">Salir</Button>
-        </form>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
 
       <div className="mt-6 flex flex-wrap gap-2 text-sm">
         <Link href="/admin" className={`rounded-full border px-3 py-1 ${!filtro ? "bg-primary text-primary-foreground" : ""}`}>

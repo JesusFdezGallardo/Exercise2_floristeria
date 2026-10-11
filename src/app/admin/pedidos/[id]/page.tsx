@@ -1,12 +1,14 @@
 // Detalle de un pedido en el panel de admin, con los cambios de estado permitidos.
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BadgeEstado } from "@/components/badge-estado";
 import { CambiarEstado } from "@/components/cambiar-estado";
+import { SinAcceso } from "@/components/sin-acceso";
 import { TRANSICIONES_ADMIN } from "@/lib/estados";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
@@ -16,6 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DetallePedido({ params }: Props) {
+  const usuario = await usuarioActual();
+  if (!usuario) redirect(`/entrar?callbackUrl=/admin/pedidos/${encodeURIComponent((await params).id)}`);
+  if (usuario.rol !== "ADMIN") return <SinAcceso />;
+
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const pedido = await prisma.pedido.findUnique({
