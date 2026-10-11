@@ -9,7 +9,10 @@ export const MINIMO_CONTRASENA = 8;
 // scrypt con un texto enorme es caro: se corta antes de calcular nada
 export const MAXIMO_CONTRASENA = 200;
 const MAXIMO_NOMBRE = 80;
-const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 254 es el maximo de un email. Se mira ANTES del regex: con textos enormes un regex puede tardar minutos (ReDoS)
+export const MAXIMO_EMAIL = 254;
+// Sin ambiguedad (el dominio son trozos sin puntos separados por un punto): no hay backtracking que explote
+const FORMATO_EMAIL = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 export type ResultadoRegistro = { ok: true; datos: { nombre: string; email: string } } | { ok: false; error: string };
 
@@ -19,7 +22,7 @@ export function validarRegistro(d: { nombre: string; email: string; contrasena: 
   const email = d.email.trim().toLowerCase();
   if (!nombre) return { ok: false, error: "Escribe tu nombre" };
   if (nombre.length > MAXIMO_NOMBRE) return { ok: false, error: "El nombre es demasiado largo" };
-  if (!FORMATO_EMAIL.test(email)) return { ok: false, error: "Escribe un email válido" };
+  if (email.length > MAXIMO_EMAIL || !FORMATO_EMAIL.test(email)) return { ok: false, error: "Escribe un email válido" };
   if (d.contrasena.length < MINIMO_CONTRASENA) {
     return { ok: false, error: `La contraseña necesita al menos ${MINIMO_CONTRASENA} caracteres` };
   }
@@ -35,8 +38,18 @@ export function puedeVerPedido(usuario: { id: number; rol: Rol }, pedido: { usua
   return usuario.rol === "ADMIN" || (pedido.usuarioId !== null && pedido.usuarioId === usuario.id);
 }
 
-// A donde volver tras entrar: solo rutas de la propia tienda. "//x.com" o "/\x.com" saldrian a otro dominio.
+// A donde volver tras entrar: solo rutas de la propia tienda. No basta con mirar el texto: "//x.com", "/\x.com" o
+// "/<tab>/x.com" (el navegador quita tabuladores y saltos de linea) saldrian a otro dominio. Por eso se resuelve la URL
+// como lo haria el navegador, contra un origen inventado, y se comprueba que no se ha salido de el.
+const ORIGEN_PROPIO = "http://tienda.invalid";
+
 export function destinoSeguro(valor: string | null | undefined): string {
-  if (!valor || !valor.startsWith("/") || valor.startsWith("//") || valor.startsWith("/\\")) return "/";
-  return valor;
+  if (!valor || !valor.startsWith("/")) return "/";
+  try {
+    const url = new URL(valor, ORIGEN_PROPIO);
+    if (url.origin !== ORIGEN_PROPIO) return "/";
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return "/";
+  }
 }

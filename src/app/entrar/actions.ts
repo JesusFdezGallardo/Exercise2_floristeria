@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { cifrarContrasena, comprobarContrasena } from "@/lib/contrasenas";
-import { MAXIMO_CONTRASENA, destinoSeguro, validarRegistro } from "@/lib/cuentas";
+import { MAXIMO_CONTRASENA, MAXIMO_EMAIL, destinoSeguro, validarRegistro } from "@/lib/cuentas";
 import { prisma } from "@/lib/prisma";
 import { cerrarSesion, iniciarSesion } from "@/lib/sesion";
 
@@ -40,7 +40,9 @@ export async function entrar(_: EstadoFormulario, datos: FormData): Promise<Esta
   const email = texto(datos, "email").trim().toLowerCase();
   const contrasena = texto(datos, "contrasena");
   const valores = { email: texto(datos, "email") };
-  if (!email || !contrasena || contrasena.length > MAXIMO_CONTRASENA) return { error: INCORRECTOS, valores };
+  if (!email || email.length > MAXIMO_EMAIL || !contrasena || contrasena.length > MAXIMO_CONTRASENA) {
+    return { error: INCORRECTOS, valores };
+  }
 
   const usuario = await prisma.usuario.findUnique({ where: { email } });
   if (!usuario) {

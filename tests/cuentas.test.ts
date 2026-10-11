@@ -17,8 +17,17 @@ describe("validarRegistro", () => {
   it("rechaza un nombre de mas de 80 caracteres", () => {
     expect(validarRegistro({ ...valido, nombre: "a".repeat(81) })).toEqual({ ok: false, error: "El nombre es demasiado largo" });
   });
+  it("rechaza enseguida un email enorme (sin limite, el regex tardaba minutos: ReDoS)", () => {
+    const inicio = performance.now();
+    const r = validarRegistro({ ...valido, email: "a@" + ".".repeat(50_000) + "@" });
+    expect(performance.now() - inicio).toBeLessThan(50);
+    expect(r).toEqual({ ok: false, error: "Escribe un email válido" });
+  });
+  it("rechaza un email valido de mas de 254 caracteres (el maximo de un email)", () => {
+    expect(validarRegistro({ ...valido, email: "a".repeat(250) + "@b.es" })).toEqual({ ok: false, error: "Escribe un email válido" });
+  });
   it("exige un email con formato valido", () => {
-    for (const email of ["", "ana", "ana@", "@gmail.com", "ana@gmail", "ana @gmail.com"]) {
+    for (const email of ["", "ana", "ana@", "@gmail.com", "ana@gmail", "ana @gmail.com", "ana@gmail..com", "ana@.gmail.com"]) {
       expect(validarRegistro({ ...valido, email })).toEqual({ ok: false, error: "Escribe un email válido" });
     }
   });
@@ -67,5 +76,10 @@ describe("destinoSeguro (a donde volver tras entrar)", () => {
     expect(destinoSeguro("https://malo.com")).toBe("/");
     expect(destinoSeguro("//malo.com")).toBe("/");
     expect(destinoSeguro("/\\malo.com")).toBe("/");
+  });
+  it("no se deja engañar por tabuladores o saltos de linea (el navegador los quita: /\\t/malo.com = //malo.com)", () => {
+    expect(destinoSeguro("/\t/malo.com")).toBe("/");
+    expect(destinoSeguro("/\n/malo.com")).toBe("/");
+    expect(destinoSeguro("/\r\n/malo.com")).toBe("/");
   });
 });
