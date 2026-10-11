@@ -1,24 +1,42 @@
-// Reglas de las cuentas que no necesitan base de datos ni Google.
+// Reglas de las cuentas que no necesitan base de datos.
 import { describe, expect, it } from "vitest";
-import { destinoSeguro, esEmailAdmin, leerSesion, mensajeErrorEntrada, puedeVerPedido } from "../src/lib/cuentas";
+import { destinoSeguro, puedeVerPedido, validarRegistro } from "../src/lib/cuentas";
 
-describe("esEmailAdmin (semilla de ADMIN_EMAILS)", () => {
-  it("encuentra el email en la lista", () => {
-    expect(esEmailAdmin("ana@gmail.com", "luis@gmail.com,ana@gmail.com")).toBe(true);
+const valido = { nombre: "Ana", email: "ana@gmail.com", contrasena: "12345678", repetir: "12345678" };
+
+describe("validarRegistro", () => {
+  it("acepta un registro correcto, recorta el nombre y pasa el email a minusculas", () => {
+    expect(validarRegistro({ ...valido, nombre: "  Ana Pérez ", email: " Ana@Gmail.COM " })).toEqual({
+      ok: true,
+      datos: { nombre: "Ana Pérez", email: "ana@gmail.com" },
+    });
   });
-  it("no distingue mayusculas y quita espacios", () => {
-    expect(esEmailAdmin("  Ana@Gmail.com ", " luis@gmail.com , ANA@gmail.com ")).toBe(true);
+  it("exige nombre", () => {
+    expect(validarRegistro({ ...valido, nombre: "   " })).toEqual({ ok: false, error: "Escribe tu nombre" });
   });
-  it("ignora comas sobrantes", () => {
-    expect(esEmailAdmin("ana@gmail.com", ",,ana@gmail.com,")).toBe(true);
+  it("rechaza un nombre de mas de 80 caracteres", () => {
+    expect(validarRegistro({ ...valido, nombre: "a".repeat(81) })).toEqual({ ok: false, error: "El nombre es demasiado largo" });
   });
-  it("una lista vacia o sin definir no hace admin a nadie", () => {
-    expect(esEmailAdmin("ana@gmail.com", "")).toBe(false);
-    expect(esEmailAdmin("ana@gmail.com", undefined)).toBe(false);
-    expect(esEmailAdmin("", ",")).toBe(false);
+  it("exige un email con formato valido", () => {
+    for (const email of ["", "ana", "ana@", "@gmail.com", "ana@gmail", "ana @gmail.com"]) {
+      expect(validarRegistro({ ...valido, email })).toEqual({ ok: false, error: "Escribe un email válido" });
+    }
   });
-  it("no acepta coincidencias parciales", () => {
-    expect(esEmailAdmin("ana@gmail.co", "ana@gmail.com")).toBe(false);
+  it("exige al menos 8 caracteres de contraseña", () => {
+    expect(validarRegistro({ ...valido, contrasena: "1234567", repetir: "1234567" })).toEqual({
+      ok: false,
+      error: "La contraseña necesita al menos 8 caracteres",
+    });
+  });
+  it("rechaza contraseñas de mas de 200 caracteres (scrypt con textos enormes es caro)", () => {
+    const larga = "a".repeat(201);
+    expect(validarRegistro({ ...valido, contrasena: larga, repetir: larga })).toEqual({
+      ok: false,
+      error: "La contraseña es demasiado larga (máximo 200 caracteres)",
+    });
+  });
+  it("exige que las dos contraseñas coincidan", () => {
+    expect(validarRegistro({ ...valido, repetir: "87654321" })).toEqual({ ok: false, error: "Las contraseñas no coinciden" });
   });
 });
 
@@ -49,31 +67,5 @@ describe("destinoSeguro (a donde volver tras entrar)", () => {
     expect(destinoSeguro("https://malo.com")).toBe("/");
     expect(destinoSeguro("//malo.com")).toBe("/");
     expect(destinoSeguro("/\\malo.com")).toBe("/");
-  });
-});
-
-describe("mensajeErrorEntrada", () => {
-  it("sin codigo no hay mensaje", () => {
-    expect(mensajeErrorEntrada(undefined)).toBeNull();
-  });
-  it("traduce los codigos conocidos de Auth.js", () => {
-    expect(mensajeErrorEntrada("AccessDenied")).toMatch(/verificado/);
-    expect(mensajeErrorEntrada("Configuration")).toMatch(/configurado/);
-  });
-  it("cualquier otro codigo da un mensaje generico", () => {
-    expect(mensajeErrorEntrada("OAuthCallbackError")).toMatch(/inténtalo de nuevo/);
-  });
-});
-
-describe("leerSesion", () => {
-  it("convierte el id a numero y el email a minusculas", () => {
-    expect(leerSesion({ id: "7", email: "Ana@Gmail.com" })).toEqual({ id: 7, email: "ana@gmail.com" });
-  });
-  it("sin sesion, sin email o con id raro devuelve null", () => {
-    expect(leerSesion(undefined)).toBeNull();
-    expect(leerSesion({ id: "7" })).toBeNull();
-    expect(leerSesion({ id: "abc", email: "a@b.c" })).toBeNull();
-    expect(leerSesion({ id: "0", email: "a@b.c" })).toBeNull();
-    expect(leerSesion({ id: "1.5", email: "a@b.c" })).toBeNull();
   });
 });
