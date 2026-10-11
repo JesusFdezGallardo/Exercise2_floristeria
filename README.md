@@ -39,7 +39,7 @@ cualquier CVC; no se cobra nada)
 
 | Servicio | Para qué | Cuándo se llama | Desde dónde | Variables |
 |---|---|---|---|---|
-| **Neon** (PostgreSQL) | Productos, categorías y pedidos | En cada página del catálogo, en el checkout, en el webhook y en el admin | `src/lib/prisma.ts` (Prisma con driver adapter `pg`) | `DATABASE_URL` (con pooler, la app), `DIRECT_URL` (directa, las migraciones) |
+| **Neon** (PostgreSQL) | Productos, categorías y pedidos (rama `main` para producción y `desarrollo` para local) | En cada página del catálogo, en el checkout, en el webhook y en el admin | `src/lib/prisma.ts` (Prisma con driver adapter `pg`) | `DATABASE_URL` (con pooler, la app), `DIRECT_URL` (directa, las migraciones) |
 | **Stripe Checkout** | Cobrar en una página de pago alojada por Stripe | Al pulsar "Pagar": se crea una sesión con las líneas y el `pedidoId` en `metadata` | `src/app/checkout/actions.ts` vía `src/lib/stripe.ts` | `STRIPE_SECRET_KEY` (solo `sk_test_`), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` |
 | **Webhook de Stripe** (entrante) | Que Stripe avise de `checkout.session.completed` y `checkout.session.expired` | Stripe llama a la tienda tras cada pago o caducidad | `src/app/api/webhooks/stripe/route.ts` | `STRIPE_WEBHOOK_SECRET` (verifica la firma) |
 | **Resend** | Email de confirmación del pedido | Solo desde el webhook, tras marcar el pedido como pagado | `src/lib/email.ts` | `RESEND_API_KEY`, `EMAIL_PRUEBAS` (sin dominio propio, todos los emails van ahí) |
@@ -80,6 +80,10 @@ Más detalle (por qué algo es así y qué tocar para cambiarlo) en `docs/NOTAS-
 Necesitas Node.js 20+, una base PostgreSQL (Neon free tier o `docker compose up -d`), una cuenta de Stripe en modo test,
 la [Stripe CLI](https://github.com/stripe/stripe-cli) y una cuenta de Resend.
 
+Con Neon, usa **una rama para desarrollo** (*Branches › Create branch*, a partir de `main`) y pon sus URLs en el
+`.env`: así lo que hagas en local no toca la tienda publicada. `npm run db:check` te dice si estás en desarrollo o en
+producción.
+
 ```bash
 npm install                 # dependencias + cliente de Prisma
 cp .env.example .env        # y rellena los valores
@@ -91,6 +95,10 @@ stripe listen --events checkout.session.completed,checkout.session.expired --for
 ```
 
 Comprobaciones útiles: `npm run db:check`, `npm run stripe:check`, `npx tsx scripts/ver-pedidos.ts`, `npm test`.
+
+**Migraciones en producción:** Vercel no las aplica. Crea un `.env.produccion` (ignorado por git) con el
+`DATABASE_URL` y el `DIRECT_URL` de la rama `main` y ejecuta `npm run migrar:produccion` **antes** de hacer push del
+código que necesita la migración.
 
 ## Desplegarlo en Vercel
 

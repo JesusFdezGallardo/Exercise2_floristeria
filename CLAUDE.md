@@ -53,8 +53,12 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
   `EMAIL_PRUEBAS` tiene valor, todos los emails van ahí (`src/lib/email.ts`).
 
 ## Producción y entorno
-- **Local y producción comparten la misma base de Neon:** un pedido de prueba en local aparece en el admin de
-  producción, y `npm run seed` en local vacía la tienda publicada.
+- **Dos bases separadas (ramas de Neon):** el `.env` local apunta a la rama `desarrollo`; Vercel, a `main`
+  (producción). `npm run seed` y las pruebas en local no tocan la tienda publicada. `npm run db:check` dice en qué
+  entorno estás (compara con `.env.produccion`).
+- **Migraciones:** se crean y prueban en desarrollo (`npx prisma migrate dev`); a producción **no llegan solas**:
+  `npm run migrar:produccion` (usa las URLs de `.env.produccion`, solo local e ignorado por git), y después el push.
+  Vercel no ejecuta migraciones. Una migración tiene que funcionar con el código anterior (va antes del despliegue).
 - Dos URLs de Neon: `DATABASE_URL` (con `-pooler`, la app) y `DIRECT_URL` (sin pooler, las migraciones).
 - El `whsec_` de producción (destino del webhook en Stripe) es **distinto** del que imprime `stripe listen`. Si el
   webhook responde 400 "Firma no valida", el secreto de Vercel no es el del destino.
@@ -72,7 +76,8 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
 ## Comandos
 - `npm run dev` arranca en http://localhost:3000
 - `stripe listen --events checkout.session.completed,checkout.session.expired --forward-to localhost:3000/api/webhooks/stripe` (webhook en local)
-- `npx prisma migrate dev` aplica cambios del schema; `npx prisma studio` abre el visor de tablas
-- `npm run seed` rellena la base de datos con el catálogo (y borra los pedidos)
+- `npx prisma migrate dev` aplica cambios del schema en desarrollo; `npx prisma studio` abre el visor de tablas
+- `npm run migrar:produccion` aplica las migraciones pendientes a la base de producción
+- `npm run seed` rellena la base de datos de desarrollo con el catálogo (y borra sus pedidos)
 - `npm run db:check`, `npm run stripe:check`, `npx tsx scripts/ver-pedidos.ts`: comprobaciones rápidas
 - `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`
