@@ -31,28 +31,39 @@ export async function POST(req: Request) {
     const pedidoId = leerPedidoId(sesion);
     if (pedidoId === null) return Response.json({ recibido: true });
 
-    // updateMany con estado PENDIENTE: si Stripe reenvia el evento, no se procesa dos veces (idempotencia)
+    // updateMany con estado PENDIENTE: si Stripe reenvia el evento, no se procesa dos veces (idempotencia).
+    // El email NO se toca: el pedido nace con el de la cuenta.
     const { count } = await prisma.pedido.updateMany({
       where: { id: pedidoId, estado: "PENDIENTE" },
-      data: { estado: "PAGADO", email: sesion.customer_details?.email ?? "sin-email" },
+      data: { estado: "PAGADO" },
     });
 
     if (count === 1) {
+      const pedido = await prisma.pedido.findUniqueOrThrow({
+        where: { id: pedidoId },
+        include: { lineas: { include: { producto: true } } },
+      });
+      // Pedidos de antes de las cuentas (sin dueño): su email real solo lo tiene Stripe
+      let email = pedido.email;
+      if (pedido.usuarioId === null && sesion.customer_details?.email) {
+        email = sesion.customer_details.email;
+        await prisma.pedido.update({ where: { id: pedidoId }, data: { email } });
+      }
+
       // Descontamos el stock de lo vendido
-      const lineas = await prisma.lineaPedido.findMany({ where: { pedidoId }, include: { producto: true } });
-      for (const l of lineas) {
+      for (const l of pedido.lineas) {
         await prisma.producto.update({ where: { id: l.productoId }, data: { stock: { decrement: l.cantidad } } });
       }
-      console.log(`[webhook] pedido ${pedidoId} PAGADO (${sesion.amount_total} centimos, ${sesion.customer_details?.email})`);
+      console.log(`[webhook] pedido ${pedidoId} PAGADO (${pedido.total} centimos, ${email})`);
 
       // El email sale de AQUI, del webhook: si el cliente cierra el navegador tras pagar, lo recibe igual.
       // Si el email falla, el pedido sigue pagado: lo registramos y respondemos 200 a Stripe.
       try {
         await enviarConfirmacion({
           id: pedidoId,
-          email: sesion.customer_details?.email ?? "",
-          total: sesion.amount_total ?? 0,
-          lineas: lineas.map((l) => ({ nombre: l.producto.nombre, cantidad: l.cantidad, precioUnitario: l.precioUnitario })),
+          email,
+          total: pedido.total,
+          lineas: pedido.lineas.map((l) => ({ nombre: l.producto.nombre, cantidad: l.cantidad, precioUnitario: l.precioUnitario })),
         });
       } catch (e) {
         console.error("[email] no se pudo enviar:", (e as Error).message);

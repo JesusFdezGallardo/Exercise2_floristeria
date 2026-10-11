@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatearPrecio } from "@/lib/formato";
 import { calcularTotal, contarArticulos, useCarrito } from "@/store/carrito";
 
-export function VistaCarrito() {
+export function VistaCarrito({ conSesion }: { conSesion: boolean }) {
   const { lineas, cambiarCantidad, quitar, vaciar } = useCarrito();
 
   if (lineas.length === 0) {
@@ -61,7 +61,7 @@ export function VistaCarrito() {
         </div>
       </div>
       <div className="flex justify-end">
-        <BotonPagar lineas={lineas} />
+        <BotonPagar lineas={lineas} conSesion={conSesion} />
       </div>
       <p className="text-right text-xs text-muted-foreground">Pago seguro con Stripe (modo test: no se cobra nada)</p>
     </div>

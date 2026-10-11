@@ -4,11 +4,16 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 import { stripe } from "@/lib/stripe";
 
 export type ArticuloCheckout = { id: number; cantidad: number };
 
-export async function crearCheckout(articulos: ArticuloCheckout[]): Promise<{ error: string }> {
+export async function crearCheckout(articulos: ArticuloCheckout[]): Promise<{ error?: string; necesitaLogin?: true }> {
+  // 0. Para pagar hay que haber entrado. Se comprueba aqui y no solo en el boton: la accion se puede llamar desde fuera
+  const usuario = await usuarioActual();
+  if (!usuario) return { necesitaLogin: true };
+
   // 1. Validar lo que llega del navegador (lo puede haber tocado cualquiera)
   const limpios = articulos.filter((a) => Number.isInteger(a.id) && Number.isInteger(a.cantidad) && a.cantidad > 0);
   if (limpios.length === 0) return { error: "El carrito está vacío" };
@@ -27,7 +32,8 @@ export async function crearCheckout(articulos: ArticuloCheckout[]): Promise<{ er
   // 3. El pedido nace PENDIENTE. Solo el webhook lo pasara a PAGADO
   const pedido = await prisma.pedido.create({
     data: {
-      email: "pendiente@checkout", // Stripe nos dara el email real al pagar
+      email: usuario.email, // el de su cuenta; Stripe lo muestra fijo
+      usuarioId: usuario.id,
       total,
       lineas: {
         create: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad, precioUnitario: l.producto.precio })),
@@ -39,6 +45,7 @@ export async function crearCheckout(articulos: ArticuloCheckout[]): Promise<{ er
   const origen = (await headers()).get("origin") ?? "http://localhost:3000";
   const sesion = await stripe.checkout.sessions.create({
     mode: "payment",
+    customer_email: usuario.email, // el cliente no puede cambiarlo en la pagina de Stripe
     line_items: lineas.map((l) => ({
       quantity: l.cantidad,
       price_data: {
