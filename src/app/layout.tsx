@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Cabecera } from "@/components/cabecera";
+import { SincronizarCarrito } from "@/components/sincronizar-carrito";
 import { Toaster } from "@/components/ui/sonner";
+import { usuarioActual } from "@/lib/sesion";
 import { TIENDA } from "@/lib/tienda";
 import "./globals.css";
 
@@ -28,16 +30,19 @@ export const metadata: Metadata = {
   description: TIENDA.descripcion,
 };
 
-// El layout envuelve TODAS las paginas: la cabecera se pinta una vez y no se recarga al navegar
-export default function RootLayout({
+// El layout envuelve TODAS las paginas: la cabecera se pinta una vez y no se recarga al navegar.
+// Lee la sesion para saber de quien es el carrito (esto hace dinamicas todas las paginas).
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const usuario = await usuarioActual();
   return (
     // las variables de fuente van en <html>: el globals.css de shadcn aplica font-sans a html
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <body className="antialiased">
+        <SincronizarCarrito usuarioId={usuario?.id ?? null} />
         <Cabecera />
         {children}
         <Toaster position="bottom-right" />

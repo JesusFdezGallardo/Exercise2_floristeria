@@ -1,10 +1,13 @@
-// Cabecera de la tienda (Server Component). Solo el icono del carrito necesita el navegador.
+// Cabecera de la tienda (Server Component). El icono del carrito y el menu de la cuenta necesitan el navegador.
 import Link from "next/link";
 import { IconoCarrito } from "@/components/icono-carrito";
 import { Logo } from "@/components/logo";
+import { MenuCuenta } from "@/components/menu-cuenta";
+import { usuarioActual } from "@/lib/sesion";
 import { TIENDA } from "@/lib/tienda";
 
-export function Cabecera() {
+export async function Cabecera() {
+  const usuario = await usuarioActual();
   return (
     <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -17,6 +20,13 @@ export function Cabecera() {
             Catálogo
           </Link>
           <IconoCarrito />
+          {usuario ? (
+            <MenuCuenta nombre={usuario.nombre} esAdmin={usuario.rol === "ADMIN"} />
+          ) : (
+            <Link href="/entrar" className="text-muted-foreground hover:text-foreground">
+              Entrar
+            </Link>
+          )}
         </nav>
       </div>
     </header>
