@@ -45,6 +45,34 @@ enum EstadoPedido {
   CANCELADO
 }
 
+// Rol de la cuenta. Las cuentas nuevas son CLIENTE; ADMIN solo se pone con "npm run crear-admin".
+enum Rol {
+  CLIENTE
+  ADMIN
+}
+
+// Cuenta de cliente. El email hace de nombre de usuario.
+model Usuario {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique // en minusculas
+  nombre     String
+  contrasena String // hash scrypt "sal:hash" en hexadecimal (src/lib/contrasenas.ts), nunca la contraseña
+  rol        Rol      @default(CLIENTE)
+  creadoEn   DateTime @default(now())
+  pedidos    Pedido[]
+  sesiones   Sesion[]
+}
+
+// Una sesion abierta. El id es el SHA-256 del token de la cookie: quien lea la BD no puede fabricar cookies validas.
+model Sesion {
+  id        String   @id
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId Int
+  caduca    DateTime
+
+  @@index([usuarioId])
+}
+
 model Pedido {
   id              Int           @id @default(autoincrement())
   email           String
@@ -54,6 +82,10 @@ model Pedido {
   creadoEn        DateTime      @default(now())
   actualizadoEn   DateTime      @updatedAt
   lineas          LineaPedido[]
+  usuario         Usuario?      @relation(fields: [usuarioId], references: [id])
+  usuarioId       Int? // opcional: los pedidos de antes de las cuentas no tienen dueño
+
+  @@index([usuarioId])
 }
 
 // Tabla intermedia: que productos lleva cada pedido, cuantos y a que precio

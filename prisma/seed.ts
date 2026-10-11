@@ -1,7 +1,7 @@
 // Datos de ejemplo de la floristeria: 4 categorias por ocasion y 10 ramos y centros (prisma/catalogo-datos.ts).
 //   npx prisma db seed      (o npm run seed)
 // Es idempotente: borra y vuelve a crear, asi se puede lanzar tantas veces como haga falta.
-// OJO: borra tambien TODOS los pedidos.
+// OJO: borra tambien TODOS los pedidos, usuarios y sesiones (despues: npm run crear-admin).
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -13,9 +13,9 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  // Vaciamos las 4 tablas Y reiniciamos los contadores de id (RESTART IDENTITY).
+  // Vaciamos las tablas Y reiniciamos los contadores de id (RESTART IDENTITY).
   // Con deleteMany los id seguian creciendo (13, 14...) y los enlaces /producto/1 dejaban de existir.
-  await prisma.$executeRaw`TRUNCATE "LineaPedido", "Pedido", "Producto", "Categoria" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE "LineaPedido", "Pedido", "Sesion", "Usuario", "Producto", "Categoria" RESTART IDENTITY CASCADE`;
 
   for (const c of CATEGORIAS) {
     await prisma.categoria.create({
