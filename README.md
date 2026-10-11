@@ -18,12 +18,13 @@ cualquier CVC; no se cobra nada)
 | Ruta | Qué hace |
 |---|---|
 | `/` | **Catálogo** de 10 ramos y centros en 4 ocasiones (Amor, Celebraciones, Condolencias, Para casa), con búsqueda por nombre, filtros de ocasión y precio, y orden por precio o nombre. Todo se resuelve en el servidor y vive en la URL, así que cualquier búsqueda se puede compartir. |
-| `/producto/[id]` | **Ficha** con ilustración, descripción, precio, stock, distintivo de "Agotado" (botón desactivado) y 404 si no existe. |
+| `/producto/[id]` | **Ficha** con ilustración, descripción, precio, stock y distintivo de "Agotado" (botón desactivado). Si el producto no existe, su propia 404: "No encontramos ese producto". |
 | `/carrito` | **Carrito** con Zustand: cambiar cantidades, quitar productos y total. Sobrevive a recargar y a cerrar el navegador (localStorage). |
 | Botón "Pagar" | **Checkout** con una Server Action: crea el pedido PENDIENTE releyendo precios y stock de la base de datos (nunca del navegador) y redirige a la página de pago de Stripe. |
 | `/checkout/exito` | Muestra el pedido y su estado. Dice "Pago confirmado" solo cuando el webhook ya lo ha marcado como pagado; si aún no, lo dice con honestidad. |
 | `/checkout/cancelado` | El cliente volvió sin pagar: no se cobra nada y el carrito sigue guardado. |
-| `/admin` | **Panel de la floristería**, con contraseña: pedidos filtrados por estado y ficha de cada pedido para avanzarlo (pagado → enviado → entregado) o cancelar uno que se quedó sin pagar. |
+| Cualquier otra ruta | 404 general: "No encontramos esa página", con enlace al catálogo. |
+| `/admin` | **Panel de la floristería**, con contraseña: pedidos filtrados por estado (toda la fila abre el pedido) y ficha de cada pedido para avanzarlo (pagado → enviado → entregado) o cancelar uno que se quedó sin pagar. |
 
 ### Lo que pasa por detrás
 

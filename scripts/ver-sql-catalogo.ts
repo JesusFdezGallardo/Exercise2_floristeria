@@ -15,12 +15,12 @@ prisma.$on("query", (e) => {
 });
 
 async function main() {
-  // lo mismo que /?q=reloj&categoria=relojes&min=50&max=100
+  // lo mismo que /?q=rosas&categoria=amor&min=40&max=60
   const productos = await prisma.producto.findMany({
     where: {
-      nombre: { contains: "reloj", mode: "insensitive" },
-      categoria: { slug: "relojes" },
-      precio: { gte: 5000, lte: 10000 },
+      nombre: { contains: "rosas", mode: "insensitive" },
+      categoria: { slug: "amor" },
+      precio: { gte: 4000, lte: 6000 },
     },
     select: { nombre: true, precio: true },
     orderBy: { precio: "asc" },

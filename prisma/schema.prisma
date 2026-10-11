@@ -14,7 +14,7 @@ datasource db {
 model Categoria {
   id        Int        @id @default(autoincrement())
   nombre    String     @unique
-  slug      String     @unique // para la URL: /?categoria=audio
+  slug      String     @unique // para la URL: /?categoria=amor
   productos Producto[]
 }
 

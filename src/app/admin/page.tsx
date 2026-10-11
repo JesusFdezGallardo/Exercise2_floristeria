@@ -65,9 +65,11 @@ export default async function PanelPedidos({ searchParams }: Props) {
         </TableHeader>
         <TableBody>
           {pedidos.map((p) => (
-            <TableRow key={p.id}>
+            // Toda la fila abre el pedido: el ::after del enlace se estira sobre la fila (relative). Sin JS en el navegador.
+            <TableRow key={p.id} className="relative">
               <TableCell>
-                <Link href={`/admin/pedidos/${p.id}`} className="font-medium underline-offset-4 hover:underline">
+                <Link href={`/admin/pedidos/${p.id}`}
+                  className="font-medium underline underline-offset-4 after:absolute after:inset-0 after:content-['']">
                   #{p.id}
                 </Link>
               </TableCell>

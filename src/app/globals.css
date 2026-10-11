@@ -49,7 +49,7 @@
 }
 
 :root {
-  /* El Rincon de las Flores: verde hoja sobre crema (referencias en hex al lado) */
+  /* Colores de la floristería: verde hoja sobre crema (referencias en hex al lado) */
   --background: oklch(0.974 0.011 84.6); /* #FAF6EE crema */
   --foreground: oklch(0.272 0.021 153.3); /* #1F2A22 */
   --card: oklch(0.974 0.011 84.6);

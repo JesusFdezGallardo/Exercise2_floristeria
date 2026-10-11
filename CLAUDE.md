@@ -34,13 +34,18 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
 - **Admin:** contraseña `ADMIN_PASSWORD` + cookie `admin_rincon` con huella SHA-256 (`src/lib/admin.ts`). El
   middleware protege las páginas, no las acciones: cada Server Action de admin vuelve a llamar a `esAdmin`.
 - **La marca en un solo sitio:** el nombre está solo en `src/lib/tienda.ts` (`tests/marca.test.ts` falla si aparece
-  en otro archivo de `src/`); los colores, en `:root` de `src/app/globals.css` (`tests/tema.test.ts` exige contraste AA).
+  en otro archivo de `src/`, o escrito sin tilde en `src`, `prisma` o `public`, aunque sea en un comentario);
+  los colores, en `:root` de `src/app/globals.css` (`tests/tema.test.ts` exige contraste AA).
 - **Catálogo:** datos en `prisma/catalogo-datos.ts` (en céntimos) y una ilustración por producto en
   `public/productos/<slug>.svg` (`tests/imagenes.test.ts` comprueba que no falte ni sobre ninguna).
 - **`npm run seed` borra también los pedidos** y reinicia los ids. Si se recarga otro catálogo en producción, cambia
   la clave del carrito (`carrito-rincon` en `src/store/carrito.ts`) para que los carritos viejos no apunten a otro producto.
 - **Filtros del catálogo en la URL:** un parámetro nuevo se conserva en tres sitios (`urlCon` y un `input hidden` en
   `src/components/filtros.tsx`, y `leerFiltros` en `src/lib/catalogo.ts`).
+- **Dos páginas 404:** la general (`src/app/not-found.tsx`) y la de la ficha (`src/app/producto/[id]/not-found.tsx`),
+  las dos con `src/components/pagina-404.tsx`. La de la ficha llega en streaming: `curl` no ve el texto, un navegador sí.
+- **Lista del admin:** toda la fila abre el pedido con un `::after` estirado (`src/app/admin/page.tsx`); un botón
+  nuevo dentro de la fila necesita `relative z-10` para no quedar tapado.
 - **La búsqueda distingue tildes** ("peonias" no encuentra "peonías"): limitación conocida.
 - **Emails:** sin dominio propio, Resend solo envía desde `onboarding@resend.dev` y a la dirección de la cuenta; si
   `EMAIL_PRUEBAS` tiene valor, todos los emails van ahí (`src/lib/email.ts`).
