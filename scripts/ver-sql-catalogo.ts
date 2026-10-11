@@ -18,7 +18,7 @@ async function main() {
   // lo mismo que /?q=rosas&categoria=amor&min=40&max=60
   const productos = await prisma.producto.findMany({
     where: {
-      nombre: { contains: "rosas", mode: "insensitive" },
+      nombreBusqueda: { contains: "rosas" }, // sin tildes: ver src/lib/busqueda.ts
       categoria: { slug: "amor" },
       precio: { gte: 4000, lte: 6000 },
     },

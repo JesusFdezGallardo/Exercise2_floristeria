@@ -5,6 +5,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { normalizar } from "../src/lib/busqueda";
 import { CATEGORIAS, PRODUCTOS } from "./catalogo-datos";
 
 const prisma = new PrismaClient({
@@ -23,6 +24,7 @@ async function main() {
         productos: {
           create: PRODUCTOS.filter((p) => p.cat === c.slug).map((p) => ({
             nombre: p.nombre,
+            nombreBusqueda: normalizar(p.nombre), // para la busqueda sin tildes
             slug: p.slug,
             descripcion: p.descripcion,
             precio: p.precio,
