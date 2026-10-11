@@ -150,6 +150,21 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 ## Base de datos y entorno
 - **Dos URLs de Neon:** `DATABASE_URL` (con pooler, la usa la app) y `DIRECT_URL` (sin pooler, la usan las migraciones,
   ver `prisma.config.ts`). Si las migraciones se cuelgan o fallan raro, revisa que `DIRECT_URL` no lleve `-pooler`.
+- **Dos bases: desarrollo y producción** (ramas `desarrollo` y `main` del proyecto de Neon).
+  - `.env` → rama `desarrollo`. Es la que usan `npm run dev`, `npm run seed`, los scripts y `prisma migrate dev`.
+  - `.env.produccion` → rama `main`, solo con `DATABASE_URL` y `DIRECT_URL`. Lo ignora git (`.env*`); vive solo en tu
+    máquina. Lo usa únicamente `npm run migrar:produccion`.
+  - Vercel tiene sus propias variables, que apuntan a `main`.
+  - `npm run db:check` dice "desarrollo" o "PRODUCCION" comparando el servidor del `.env` con el de `.env.produccion`.
+- **Flujo de una migración:** cambiar `schema.prisma` → `npx prisma migrate dev --name <nombre>` (en desarrollo) →
+  probar → `npm run migrar:produccion` → push. Vercel **no** aplica migraciones al desplegar, así que el orden
+  importa: la migración va primero y tiene que funcionar también con el código que aún está publicado (añadir una
+  columna con valor o rellenarla en el mismo SQL, como en `20261011120000_busqueda_sin_tildes`; nunca borrar una
+  columna que el código publicado todavía lee).
+- **Volver a copiar producción en desarrollo:** en Neon, rama `desarrollo` › *Reset from parent*. Se pierde lo que
+  hubiera en desarrollo; producción no se toca. Después, `npm run seed` si la quieres sin pedidos.
+- La rama `desarrollo` tiene su propio servidor (se suspende solo si no se usa). La primera consulta tras un rato
+  sin usarla tarda un par de segundos más.
 - El cliente de Prisma se **genera** en `src/generated/prisma` (ignorado por git) al hacer `npm install`
   (script `postinstall`). Tras cambiar `schema.prisma`, `npx prisma migrate dev` lo regenera; si los tipos no cuadran,
   `npx prisma generate`.
@@ -165,9 +180,9 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 
 Lo que se aprendió al desplegar (octubre de 2026). La tienda está en https://exercise2-floristeria.vercel.app.
 
-- **Una sola base de datos para local y producción.** El `.env` local y Vercel apuntan al mismo proyecto de Neon:
-  un pedido hecho en `localhost` sale en el admin de producción, y `npm run seed` en local vacía la tienda publicada.
-  Si eso molesta, crea una rama de Neon para desarrollo y pon su URL solo en el `.env`.
+- **Desarrollo y producción en ramas distintas de Neon.** Al principio compartían base (un pedido en `localhost`
+  salía en el admin de producción y `npm run seed` vaciaba la tienda publicada). Ahora el proyecto de Neon tiene dos
+  ramas: `main` (producción, la usa Vercel) y `desarrollo` (copia de `main`, la usa el `.env` local).
 - **Claves de test en Vercel.** `src/lib/stripe.ts` se niega a arrancar con una clave que no empiece por `sk_test_`.
   Ocurrió: se copió la `sk_live_` con el panel de Stripe en modo real y el checkout y el webhook fallaron con
   "STRIPE_SECRET_KEY no es de test". El destino del webhook también tiene que estar creado en **modo de prueba**.
