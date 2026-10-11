@@ -1,8 +1,8 @@
 # El Rincón de las Flores · floristería online con Next.js, Stripe y Neon
 
-Floristería de barrio con tienda online completa: catálogo de ramos y centros de mesa con búsqueda, filtros por
-ocasión y precio y orden; carrito persistente; pago con Stripe confirmado por **webhook**; email de confirmación; y
-panel para gestionar los pedidos. Desplegada en Vercel con CI.
+**Resumen:** tienda online de una floristería de barrio. El cliente busca ramos y centros de mesa por ocasión,
+los añade al carrito y paga con Stripe; el pago se confirma por webhook, se descuenta el stock y le llega un email.
+La floristería gestiona los pedidos desde un panel privado. Desplegada en Vercel, con base de datos en Neon y CI en GitHub Actions.
 
 **Demo:** https://exercise2-floristeria.vercel.app (Stripe en modo test: usa la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
 cualquier CVC; no se cobra nada)
@@ -11,19 +11,42 @@ cualquier CVC; no se cobra nada)
 
 ![Arquitectura](docs/arquitectura.svg)
 
-## Qué hace
+## Qué tiene la aplicación
 
-- **Catálogo** de 10 ramos y centros en 4 ocasiones (Amor, Celebraciones, Condolencias, Para casa), con búsqueda por
-  nombre, filtros de ocasión y precio, y orden por precio o nombre. Todo se resuelve en el servidor y vive en la URL,
-  así que cualquier búsqueda se puede compartir.
-- **Ficha de producto** con ruta dinámica, stock, estado de agotado y 404.
-- **Carrito** con Zustand que sobrevive a recargar y a cerrar el navegador (localStorage).
-- **Checkout** con Stripe desde una Server Action: los precios se releen de la base de datos, nunca del navegador.
-- **Webhook firmado**: el único punto que marca un pedido como PAGADO, descuenta stock y envía el email (idempotente).
-  Si el pago se abandona y la sesión de Stripe caduca, el mismo webhook cancela el pedido.
-- **Email de confirmación** con Resend.
-- **Panel de la floristería** protegido: pedidos por estado y cambios de estado (pagado -> enviado -> entregado).
+### Pantallas
+
+| Ruta | Qué hace |
+|---|---|
+| `/` | **Catálogo** de 10 ramos y centros en 4 ocasiones (Amor, Celebraciones, Condolencias, Para casa), con búsqueda por nombre, filtros de ocasión y precio, y orden por precio o nombre. Todo se resuelve en el servidor y vive en la URL, así que cualquier búsqueda se puede compartir. |
+| `/producto/[id]` | **Ficha** con ilustración, descripción, precio, stock, distintivo de "Agotado" (botón desactivado) y 404 si no existe. |
+| `/carrito` | **Carrito** con Zustand: cambiar cantidades, quitar productos y total. Sobrevive a recargar y a cerrar el navegador (localStorage). |
+| Botón "Pagar" | **Checkout** con una Server Action: crea el pedido PENDIENTE releyendo precios y stock de la base de datos (nunca del navegador) y redirige a la página de pago de Stripe. |
+| `/checkout/exito` | Muestra el pedido y su estado. Dice "Pago confirmado" solo cuando el webhook ya lo ha marcado como pagado; si aún no, lo dice con honestidad. |
+| `/checkout/cancelado` | El cliente volvió sin pagar: no se cobra nada y el carrito sigue guardado. |
+| `/admin` | **Panel de la floristería**, con contraseña: pedidos filtrados por estado y ficha de cada pedido para avanzarlo (pagado → enviado → entregado) o cancelar uno que se quedó sin pagar. |
+
+### Lo que pasa por detrás
+
+- **Webhook firmado de Stripe**: el único punto que marca un pedido como PAGADO, descuenta el stock y envía el email.
+  Es idempotente (un evento repetido no descuenta dos veces). Si el pago se abandona y la sesión de Stripe caduca,
+  el mismo webhook cancela el pedido.
+- **Email de confirmación** con Resend, con el número de pedido, las líneas y el total.
 - **Ilustraciones propias** en SVG para cada producto: sin fotos ni licencias de terceros.
+- **Tests** de las reglas de negocio, de los datos del catálogo, de la marca y del contraste de colores (Vitest).
+
+## Servicios externos
+
+| Servicio | Para qué | Cuándo se llama | Desde dónde | Variables |
+|---|---|---|---|---|
+| **Neon** (PostgreSQL) | Productos, categorías y pedidos | En cada página del catálogo, en el checkout, en el webhook y en el admin | `src/lib/prisma.ts` (Prisma con driver adapter `pg`) | `DATABASE_URL` (con pooler, la app), `DIRECT_URL` (directa, las migraciones) |
+| **Stripe Checkout** | Cobrar en una página de pago alojada por Stripe | Al pulsar "Pagar": se crea una sesión con las líneas y el `pedidoId` en `metadata` | `src/app/checkout/actions.ts` vía `src/lib/stripe.ts` | `STRIPE_SECRET_KEY` (solo `sk_test_`), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` |
+| **Webhook de Stripe** (entrante) | Que Stripe avise de `checkout.session.completed` y `checkout.session.expired` | Stripe llama a la tienda tras cada pago o caducidad | `src/app/api/webhooks/stripe/route.ts` | `STRIPE_WEBHOOK_SECRET` (verifica la firma) |
+| **Resend** | Email de confirmación del pedido | Solo desde el webhook, tras marcar el pedido como pagado | `src/lib/email.ts` | `RESEND_API_KEY`, `EMAIL_PRUEBAS` (sin dominio propio, todos los emails van ahí) |
+| **Google Fonts** | Fuentes Geist (texto) y Fraunces (títulos) | Solo al compilar: `next/font` las descarga y las sirve la propia web | `src/app/layout.tsx` | — |
+| **Vercel** | Alojamiento y despliegue automático en cada push a `main` | Siempre (hosting) | — | Las de arriba, más `ADMIN_PASSWORD` |
+| **GitHub Actions** | CI: lint, tipos, tests y build en cada push | En cada push | `.github/workflows/ci.yml` | Claves ficticias: no se conecta a nada |
+
+El navegador del cliente solo habla con la tienda y con la página de pago de Stripe: ninguna clave secreta sale del servidor.
 
 ## Stack
 
@@ -75,8 +98,10 @@ Comprobaciones útiles: `npm run db:check`, `npm run stripe:check`, `npx tsx scr
    `RESEND_API_KEY`, `EMAIL_PRUEBAS`, `ADMIN_PASSWORD`.
 3. En Stripe (Workbench > Webhooks > Add destination): eventos `checkout.session.completed` y `checkout.session.expired`,
    y URL `https://TU-DOMINIO/api/webhooks/stripe`. Copia su signing secret como `STRIPE_WEBHOOK_SECRET` en Vercel y
-   redespliega.
-4. Usa el dominio de producción (`*.vercel.app` sin hash): las URLs de cada despliegue están protegidas por Vercel.
+   redespliega. Ese secreto es distinto del que imprime `stripe listen` en local.
+4. Comprueba que las claves de Stripe en Vercel son las de **test** (`sk_test_`, `pk_test_`): con una `sk_live_` la
+   tienda se niega a arrancar el pago, a propósito.
+5. Usa el dominio de producción (`*.vercel.app` sin hash): las URLs de cada despliegue están protegidas por Vercel.
 
 ## Estructura
 

@@ -128,3 +128,30 @@ la funcion `urlCon`, un `<input type="hidden">` dentro del formulario y su lectu
   dejalo vacio y cambia el `from`.
 - **CI** (`.github/workflows/ci.yml`) usa claves ficticias: el build necesita que existan, pero no se conecta a nada.
   Si anades una variable de entorno que el build necesite, anadela tambien ahi (con un valor falso) y en Vercel.
+
+---
+
+## Producción
+
+Lo que se aprendió al desplegar (octubre de 2026). La tienda está en https://exercise2-floristeria.vercel.app.
+
+- **Una sola base de datos para local y producción.** El `.env` local y Vercel apuntan al mismo proyecto de Neon:
+  un pedido hecho en `localhost` sale en el admin de producción, y `npm run seed` en local vacía la tienda publicada.
+  Si eso molesta, crea una rama de Neon para desarrollo y pon su URL solo en el `.env`.
+- **Claves de test en Vercel.** `src/lib/stripe.ts` se niega a arrancar con una clave que no empiece por `sk_test_`.
+  Ocurrió: se copió la `sk_live_` con el panel de Stripe en modo real y el checkout y el webhook fallaron con
+  "STRIPE_SECRET_KEY no es de test". El destino del webhook también tiene que estar creado en **modo de prueba**.
+- **Dos secretos de webhook distintos.** `stripe listen` da uno (local, en `.env`) y el destino de producción en
+  Stripe da otro (en Vercel). Con el equivocado, Stripe recibe 400 "Firma no valida", el pedido se queda PENDIENTE
+  y la página de éxito muestra el aviso ámbar de "Estamos confirmando tu pago".
+- **Cómo comprobar una entrega sin fiarse del panel:** `stripe events list` muestra `pending_webhooks` (0 = entregado).
+  Tras arreglar el secreto y redesplegar, `stripe events resend <evt_…> --webhook-endpoint=<we_…>` lo reenvía; por la
+  idempotencia del webhook, reenviar nunca duplica nada.
+- **Una variable nueva en Vercel no se aplica sola:** hace falta *Redeploy*.
+- **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` como "Config", no "Sensitive":** Vercel avisa de que el prefijo la expone al
+  navegador; para la clave publicable es correcto. La tienda en realidad no la usa (el pago redirige desde el servidor);
+  solo la lee `npm run stripe:check`.
+- **URLs de Vercel:** la de producción es la que no lleva hash. Las de cada despliegue (`…-<hash>-gall3.vercel.app`)
+  piden iniciar sesión en Vercel (302).
+- **`npm run build` con `npm run dev` en marcha** falla con errores raros al prerenderizar (`reading 'call'`): los dos
+  escriben en `.next`. Para el dev, borra `.next` y vuelve a compilar.
