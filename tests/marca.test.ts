@@ -35,6 +35,13 @@ describe("marca de la tienda", () => {
     expect(conNombre).toEqual(["src/lib/tienda.ts"]);
   });
 
+  it("el nombre tampoco aparece escrito sin tilde (Rincon) en src, prisma ni public", () => {
+    const sinTilde = deLaTienda
+      .filter((f) => /rincon de las flores/i.test(readFileSync(f, "utf8")))
+      .map((f) => relative(raiz, f).replaceAll("\\", "/"));
+    expect(sinTilde).toEqual([]);
+  });
+
   it("el carrito usa una clave nueva: los carritos de Volta (ids reutilizados) se ignoran", async () => {
     // En Node no hay localStorage y sin el persist de Zustand no se activa: le damos uno vacio
     vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => {}, removeItem: () => {} });
