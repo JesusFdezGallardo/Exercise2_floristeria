@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PaginaProducto({ params }: Props) {
   const producto = await cargarProducto((await params).id);
-  if (!producto) notFound(); // pinta app/not-found.tsx con estado HTTP 404
+  if (!producto) notFound(); // pinta producto/[id]/not-found.tsx con estado HTTP 404
 
   const agotado = producto.stock === 0;
   return (
