@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<g id="peonia"><circle cx="-16" cy="4" r="22" fill="#F2A7BB"/><circle cx="16" cy="4" r="22" fill="#F2A7BB"/><circle cx="0" cy="-14" r="22" fill="#F5B5C6"/><circle cx="0" cy="12" r="22" fill="#EE95AD"/><circle cx="-6" cy="-2" r="13" fill="#F9CCD8"/><circle cx="7" cy="2" r="10" fill="#E8839D"/></g>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<path d="M150 250 L118 118 L250 168 L382 118 L350 250 Z" fill="#DDBF94"/>
+<g fill="#5E8C68"><ellipse cx="160" cy="190" rx="16" ry="44" transform="rotate(-35 160 190)"/><ellipse cx="340" cy="190" rx="16" ry="44" transform="rotate(35 340 190)"/></g>
+<g fill="#3F6B4A"><ellipse cx="190" cy="140" rx="12" ry="36" transform="rotate(-15 190 140)"/><ellipse cx="310" cy="140" rx="12" ry="36" transform="rotate(15 310 140)"/></g>
+<use href="#peonia" x="250" y="146"/><use href="#peonia" x="186" y="176"/><use href="#peonia" x="314" y="176"/>
+<use href="#peonia" x="218" y="226"/><use href="#peonia" x="284" y="226"/>
+<path d="M138 248 L362 248 L286 456 L214 456 Z" fill="#C9A27A"/>
+<path d="M250 248 L250 456 M190 248 L232 456 M310 248 L268 456" stroke="#B08560" stroke-width="3" fill="none" opacity=".6"/>
+<g fill="#E8839D"><ellipse cx="222" cy="326" rx="28" ry="13" transform="rotate(-18 222 326)"/><ellipse cx="278" cy="326" rx="28" ry="13" transform="rotate(18 278 326)"/><path d="M244 334 L226 382 L238 378 L248 388 Z"/><path d="M256 334 L274 382 L262 378 L252 388 Z"/><circle cx="250" cy="330" r="10"/></g>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<pattern id="hortensia-azul" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#9FB3E3"/><g fill="#C7D3F2"><circle cx="6" cy="11" r="5"/><circle cx="16" cy="11" r="5"/><circle cx="11" cy="6" r="5"/><circle cx="11" cy="16" r="5"/></g><circle cx="11" cy="11" r="1.8" fill="#6F86C4"/></pattern>
+<pattern id="hortensia-lila" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#C3A9DE"/><g fill="#E2D3F2"><circle cx="6" cy="11" r="5"/><circle cx="16" cy="11" r="5"/><circle cx="11" cy="6" r="5"/><circle cx="11" cy="16" r="5"/></g><circle cx="11" cy="11" r="1.8" fill="#8E6FC1"/></pattern>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<g fill="#3F6B4A"><ellipse cx="130" cy="322" rx="16" ry="44" transform="rotate(-62 130 322)"/><ellipse cx="370" cy="322" rx="16" ry="44" transform="rotate(62 370 322)"/></g>
+<g fill="#5E8C68"><ellipse cx="160" cy="250" rx="14" ry="38" transform="rotate(-30 160 250)"/><ellipse cx="340" cy="250" rx="14" ry="38" transform="rotate(30 340 250)"/></g>
+<circle cx="250" cy="228" r="60" fill="url(#hortensia-azul)"/>
+<circle cx="192" cy="282" r="62" fill="url(#hortensia-lila)"/>
+<circle cx="308" cy="282" r="62" fill="url(#hortensia-azul)"/>
+<circle cx="250" cy="228" r="60" fill="#000" opacity=".04"/>
+<path d="M140 362 H360 L338 424 Q250 440 162 424 Z" fill="#B5653B"/>
+<rect x="128" y="348" width="244" height="18" rx="9" fill="#9C5530"/>
+</svg>

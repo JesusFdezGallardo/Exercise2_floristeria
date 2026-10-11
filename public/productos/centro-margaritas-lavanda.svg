@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<defs>
+<g id="lavanda"><path d="M0 0 V-120" stroke="#5E8C68" stroke-width="4"/><g fill="#8E6FC1"><ellipse cx="-5" cy="-60" rx="5" ry="8"/><ellipse cx="5" cy="-70" rx="5" ry="8"/><ellipse cx="-5" cy="-80" rx="5" ry="8"/><ellipse cx="5" cy="-90" rx="5" ry="8"/><ellipse cx="-5" cy="-100" rx="5" ry="8"/><ellipse cx="5" cy="-110" rx="5" ry="8"/><ellipse cx="0" cy="-121" rx="4" ry="7"/></g></g>
+<ellipse id="petalo-margarita" cy="-18" rx="6" ry="14" fill="#FFFFFF" stroke="#E3DACA" stroke-width="1.5"/>
+<g id="margarita"><use href="#petalo-margarita"/><use href="#petalo-margarita" transform="rotate(30)"/><use href="#petalo-margarita" transform="rotate(60)"/><use href="#petalo-margarita" transform="rotate(90)"/><use href="#petalo-margarita" transform="rotate(120)"/><use href="#petalo-margarita" transform="rotate(150)"/><use href="#petalo-margarita" transform="rotate(180)"/><use href="#petalo-margarita" transform="rotate(210)"/><use href="#petalo-margarita" transform="rotate(240)"/><use href="#petalo-margarita" transform="rotate(270)"/><use href="#petalo-margarita" transform="rotate(300)"/><use href="#petalo-margarita" transform="rotate(330)"/><circle r="9" fill="#F5B700"/></g>
+</defs>
+<rect width="500" height="500" fill="#FAF6EE"/>
+<use href="#lavanda" transform="translate(160 350) rotate(-14)"/><use href="#lavanda" transform="translate(185 350) rotate(-6)"/>
+<use href="#lavanda" transform="translate(315 350) rotate(6)"/><use href="#lavanda" transform="translate(340 350) rotate(14)"/>
+<g fill="#3F6B4A"><ellipse cx="135" cy="325" rx="14" ry="40" transform="rotate(-60 135 325)"/><ellipse cx="365" cy="325" rx="14" ry="40" transform="rotate(60 365 325)"/></g>
+<use href="#margarita" x="250" y="250"/><use href="#margarita" x="205" y="278"/><use href="#margarita" x="295" y="278"/>
+<use href="#margarita" x="180" y="322"/><use href="#margarita" x="228" y="320"/><use href="#margarita" x="272" y="320"/><use href="#margarita" x="320" y="322"/>
+<path d="M140 362 H360 L338 424 Q250 440 162 424 Z" fill="#B5653B"/>
+<rect x="128" y="348" width="244" height="18" rx="9" fill="#9C5530"/>
+</svg>

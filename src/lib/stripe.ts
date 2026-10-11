@@ -11,5 +11,5 @@ if (!clave.startsWith("sk_test_")) {
 }
 
 export const stripe = new Stripe(clave, {
-  appInfo: { name: "tienda-volta" },
+  appInfo: { name: "rincon-flores" },
 });

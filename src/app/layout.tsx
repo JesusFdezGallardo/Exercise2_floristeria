@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Cabecera } from "@/components/cabecera";
 import { Toaster } from "@/components/ui/sonner";
+import { TIENDA } from "@/lib/tienda";
 import "./globals.css";
 
 // shadcn usa la variable --font-sans: le damos la fuente Geist
@@ -15,9 +16,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Fraunces (serif, licencia OFL) solo para los titulos: globals.css la aplica a h1-h3
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+});
+
+// Cada pagina pone solo su parte del titulo ("Carrito") y Next anade el nombre de la tienda
 export const metadata: Metadata = {
-  title: "Tienda Volta",
-  description: "Tienda online de ejemplo del proyecto Ecommerce",
+  title: { default: TIENDA.nombre, template: `%s · ${TIENDA.nombre}` },
+  description: TIENDA.descripcion,
 };
 
 // El layout envuelve TODAS las paginas: la cabecera se pinta una vez y no se recarga al navegar
@@ -28,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     // las variables de fuente van en <html>: el globals.css de shadcn aplica font-sans a html
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable}`}>
       <body className="antialiased">
         <Cabecera />
         {children}

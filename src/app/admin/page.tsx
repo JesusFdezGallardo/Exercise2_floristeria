@@ -10,7 +10,7 @@ import { ESTADOS, ETIQUETA } from "@/lib/estados";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
 
-export const metadata: Metadata = { title: "Pedidos · Admin · Tienda Volta" };
+export const metadata: Metadata = { title: "Pedidos · Admin" };
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ estado?: string }> };
@@ -59,7 +59,7 @@ export default async function PanelPedidos({ searchParams }: Props) {
             <TableHead>Fecha</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Articulos</TableHead>
+            <TableHead className="text-right">Artículos</TableHead>
             <TableHead className="text-right">Total</TableHead>
           </TableRow>
         </TableHeader>

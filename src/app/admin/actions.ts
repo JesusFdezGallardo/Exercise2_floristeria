@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function entrar(_: unknown, datos: FormData): Promise<{ error: string }> {
   const clave = process.env.ADMIN_PASSWORD;
-  if (!clave || datos.get("clave") !== clave) return { error: "Contrasena incorrecta" };
+  if (!clave || datos.get("clave") !== clave) return { error: "Contraseña incorrecta" };
   (await cookies()).set(COOKIE_ADMIN, await huella(clave), {
     httpOnly: true, // JavaScript del navegador no puede leerla
     sameSite: "lax",

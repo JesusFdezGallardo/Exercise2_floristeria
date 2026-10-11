@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
 
-export const metadata: Metadata = { title: "Gracias por tu compra · Tienda Volta" };
+export const metadata: Metadata = { title: "Gracias por tu compra" };
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ session_id?: string }> };
@@ -29,7 +29,7 @@ export default async function PaginaExito({ searchParams }: Props) {
       <VaciarCarrito />
       <h1 className="text-3xl font-bold tracking-tight">¡Gracias por tu compra!</h1>
       {!pedido ? (
-        <p className="text-muted-foreground">No encontramos ese pedido. Si has pagado, te llegara un email de confirmacion.</p>
+        <p className="text-muted-foreground">No encontramos ese pedido. Si has pagado, te llegará un email de confirmación.</p>
       ) : (
         <>
           {pedido.estado === "PAGADO" ? (
@@ -39,7 +39,7 @@ export default async function PaginaExito({ searchParams }: Props) {
           ) : (
             // El webhook aun no ha llegado (o no llegara si esta caido): lo decimos con honestidad
             <p className="rounded-lg bg-amber-50 px-4 py-3 text-amber-800">
-              Estamos confirmando tu pago con el banco. Recibiras un email en cuanto este listo.
+              Estamos confirmando tu pago con el banco. Recibirás un email en cuanto esté listo.
             </p>
           )}
           <div className="rounded-xl border p-5">

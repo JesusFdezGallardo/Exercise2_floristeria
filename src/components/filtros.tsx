@@ -29,14 +29,14 @@ export function Filtros({ filtros, categorias }: Props) {
         {filtros.orden !== ORDEN_POR_DEFECTO && <input type="hidden" name="orden" value={filtros.orden} />}
         <label className="flex flex-1 flex-col gap-1 text-sm">
           Buscar
-          <Input name="q" defaultValue={filtros.q} placeholder="auriculares, reloj, zapatillas..." className="min-w-56" />
+          <Input name="q" defaultValue={filtros.q} placeholder="rosas, girasoles, centro..." className="min-w-56" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          Precio min. (€)
+          Precio mín. (€)
           <Input name="min" type="number" min={0} defaultValue={filtros.min ?? ""} className="w-28" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          Precio max. (€)
+          Precio máx. (€)
           <Input name="max" type="number" min={0} defaultValue={filtros.max ?? ""} className="w-28" />
         </label>
         <Button type="submit">Filtrar</Button>

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "Pago cancelado · Tienda Volta" };
+export const metadata: Metadata = { title: "Pago cancelado" };
 
 export default function PaginaCancelado() {
   return (

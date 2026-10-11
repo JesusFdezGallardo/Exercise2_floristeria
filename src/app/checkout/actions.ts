@@ -11,7 +11,7 @@ export type ArticuloCheckout = { id: number; cantidad: number };
 export async function crearCheckout(articulos: ArticuloCheckout[]): Promise<{ error: string }> {
   // 1. Validar lo que llega del navegador (lo puede haber tocado cualquiera)
   const limpios = articulos.filter((a) => Number.isInteger(a.id) && Number.isInteger(a.cantidad) && a.cantidad > 0);
-  if (limpios.length === 0) return { error: "El carrito esta vacio" };
+  if (limpios.length === 0) return { error: "El carrito está vacío" };
 
   // 2. Precios y stock de VERDAD, desde la base de datos
   const productos = await prisma.producto.findMany({ where: { id: { in: limpios.map((a) => a.id) } } });

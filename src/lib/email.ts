@@ -2,6 +2,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { formatearPrecio } from "@/lib/formato";
+import { TIENDA } from "@/lib/tienda";
 
 type LineaEmail = { nombre: string; cantidad: number; precioUnitario: number };
 type PedidoEmail = { id: number; email: string; total: number; lineas: LineaEmail[] };
@@ -16,9 +17,9 @@ export function plantillaConfirmacion(p: PedidoEmail): string {
       </tr>`
     )
     .join("");
-  return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#171717">
-    <h1 style="font-size:22px">Gracias por tu compra en Tienda Volta</h1>
-    <p>Hemos recibido el pago de tu pedido <strong>#${p.id}</strong>. Te avisaremos cuando salga del almacen.</p>
+  return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1F2A22">
+    <h1 style="font-size:22px;color:#3F6B4A">Gracias por tu compra en ${TIENDA.nombre}</h1>
+    <p>Hemos recibido el pago de tu pedido <strong>#${p.id}</strong>. Te avisaremos cuando salga de la tienda.</p>
     <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e5e5">${filas}
       <tr><td style="padding:12px 0;border-top:1px solid #e5e5e5"><strong>Total</strong></td>
       <td style="padding:12px 0;border-top:1px solid #e5e5e5;text-align:right"><strong>${formatearPrecio(p.total)}</strong></td></tr>
@@ -38,9 +39,9 @@ export async function enviarConfirmacion(p: PedidoEmail) {
   const para = process.env.EMAIL_PRUEBAS || p.email;
   const resend = new Resend(clave);
   const { data, error } = await resend.emails.send({
-    from: "Tienda Volta <onboarding@resend.dev>",
+    from: `${TIENDA.nombre} <onboarding@resend.dev>`,
     to: para,
-    subject: `Pedido #${p.id} confirmado · Tienda Volta`,
+    subject: `Pedido #${p.id} confirmado · ${TIENDA.nombre}`,
     html: plantillaConfirmacion(p),
   });
   if (error) console.error("[email] Resend devolvio un error:", error.message);
