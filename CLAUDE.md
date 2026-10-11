@@ -46,7 +46,9 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
   las dos con `src/components/pagina-404.tsx`. La de la ficha llega en streaming: `curl` no ve el texto, un navegador sí.
 - **Lista del admin:** toda la fila abre el pedido con un `::after` estirado (`src/app/admin/page.tsx`); un botón
   nuevo dentro de la fila necesita `relative z-10` para no quedar tapado.
-- **La búsqueda distingue tildes** ("peonias" no encuentra "peonías"): limitación conocida.
+- **Búsqueda sin tildes:** el catálogo busca en `Producto.nombreBusqueda` (nombre en minúsculas y sin tildes, con
+  `normalizar()` y `escaparLike()` de `src/lib/busqueda.ts`). Quien cree o renombre productos tiene que rellenarla;
+  hoy solo lo hace el seed.
 - **Emails:** sin dominio propio, Resend solo envía desde `onboarding@resend.dev` y a la dirección de la cuenta; si
   `EMAIL_PRUEBAS` tiene valor, todos los emails van ahí (`src/lib/email.ts`).
 

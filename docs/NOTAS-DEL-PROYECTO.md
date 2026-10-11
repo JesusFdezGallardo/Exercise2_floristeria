@@ -24,9 +24,8 @@ Las cosas de El Rincón de las Flores que no son evidentes leyendo el código po
 - La cookie del admin se llama `admin_rincon` y su huella usa la sal `rincon-flores:` (`src/lib/admin.ts`). Cambiar
   cualquiera de las dos cierra la sesión de todos los admins.
 
-**Limitación conocida: la búsqueda distingue tildes.** Buscar "peonias" no encuentra "Ramo de peonías rosas", porque
-`contains` con `mode: "insensitive"` ignora mayúsculas pero no tildes. Arreglarlo pide la extensión `unaccent` de
-PostgreSQL (una migración) o guardar una columna con el nombre sin tildes. Por ahora, solo "peonías" lleva tilde.
+**La búsqueda no distingue tildes ni mayúsculas.** "peonias", "PEONÍAS" y "peonías" encuentran "Ramo de peonías rosas".
+Ver la sección *Búsqueda sin tildes* en Catálogo.
 
 ---
 
@@ -90,8 +89,22 @@ No hay estado en el navegador: `Filtros` es un Server Component, los chips son e
 Consecuencia: **si añades un parámetro nuevo**, hay que conservarlo en tres sitios de `src/components/filtros.tsx`:
 la función `urlCon`, un `<input type="hidden">` dentro del formulario y su lectura en `leerFiltros` (`catalogo.ts`).
 
-Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, entre 40 y 60 €):
+Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, entre 40 y 60 €, sobre `nombreBusqueda`):
 `npx tsx scripts/ver-sql-catalogo.ts`.
+
+### Búsqueda sin tildes
+- PostgreSQL, con `ILIKE`, trata "i" e "í" como letras distintas. Por eso cada producto guarda su nombre ya
+  normalizado (minúsculas, sin tildes, diéresis ni virgulillas) en la columna **`nombreBusqueda`**, y el catálogo
+  busca ahí con lo que escribe el cliente normalizado igual (`normalizar()` en `src/lib/busqueda.ts`).
+- **Hay que mantenerla sincronizada:** hoy solo el seed crea productos y la rellena. Si algún día se crean o se
+  renombran productos desde otro sitio (por ejemplo, un admin de productos), ese código tiene que guardar también
+  `nombreBusqueda: normalizar(nombre)`, o el producto no saldrá en las búsquedas.
+- La migración `20261011120000_busqueda_sin_tildes` rellenó las filas que ya existían con `translate()` en SQL, sin
+  volver a sembrar (así se conservaron los pedidos). `tests/busqueda.test.ts` comprueba que esa tabla de letras da
+  lo mismo que `normalizar()`.
+- **Prisma no escapa los comodines de `LIKE`** en `contains`: sin `escaparLike()`, buscar `_` o `%` devolvía todo el
+  catálogo. Se escapan `%`, `_` y la barra invertida (el carácter de escape por defecto en PostgreSQL).
+- Solo se busca en el nombre, no en la descripción. Para buscar también ahí, haría falta otra columna normalizada.
 
 ### Orden (`?orden=`)
 - Los órdenes válidos están en la lista `ORDENES` de `src/lib/orden.ts`. **Para añadir uno** (por ejemplo, nombre Z-A)
