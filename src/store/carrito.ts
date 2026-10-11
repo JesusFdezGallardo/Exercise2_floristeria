@@ -1,9 +1,16 @@
 // Estado global del carrito con Zustand: un store = estado + acciones, sin Provider ni Context.
 // Con persist, el carrito se guarda en localStorage y sobrevive a recargas y a cerrar el navegador.
+// Hay un carrito por identidad: "carrito-rincon" sin sesion y "carrito-rincon:<usuarioId>" con sesion.
+// El store NO se carga solo (skipHydration): lo carga SincronizarCarrito cuando sabe quien ha entrado.
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export type LineaCarrito = { id: number; nombre: string; precio: number; imagen: string; cantidad: number; stock: number };
+
+export const CLAVE_CARRITO = "carrito-rincon"; // cambiarla invalida los carritos guardados (ver NOTAS)
+
+export const claveCarrito = (usuarioId: number | null) =>
+  usuarioId === null ? CLAVE_CARRITO : `${CLAVE_CARRITO}:${usuarioId}`;
 
 type EstadoCarrito = {
   lineas: LineaCarrito[];
@@ -44,7 +51,8 @@ export const useCarrito = create<EstadoCarrito>()(
       vaciar: () => set({ lineas: [] }),
     }),
     {
-      name: "carrito-rincon", // la clave en localStorage. Cambiarla invalida los carritos guardados (ver NOTAS)
+      name: CLAVE_CARRITO, // la clave en localStorage; SincronizarCarrito la cambia segun la sesion
+      skipHydration: true, // no cargar hasta saber de quien es el carrito
       storage: createJSONStorage(() => localStorage),
       partialize: (estado) => ({ lineas: estado.lineas }), // solo los datos, no las funciones
     }
@@ -54,3 +62,19 @@ export const useCarrito = create<EstadoCarrito>()(
 // Valores derivados: se calculan, no se guardan (asi nunca se desincronizan)
 export const contarArticulos = (lineas: LineaCarrito[]) => lineas.reduce((n, l) => n + l.cantidad, 0);
 export const calcularTotal = (lineas: LineaCarrito[]) => lineas.reduce((t, l) => t + l.precio * l.cantidad, 0);
+
+// Al entrar: el carrito anonimo se SUMA al del usuario. Mismo producto = una linea, sin pasar del stock
+// (el mayor de los dos guardados). De una linea repetida se quedan los datos del anonimo, que son los mas recientes.
+export function juntarCarritos(anonimo: LineaCarrito[], usuario: LineaCarrito[]): LineaCarrito[] {
+  const resultado = usuario.map((l) => ({ ...l }));
+  for (const a of anonimo) {
+    const i = resultado.findIndex((l) => l.id === a.id);
+    if (i === -1) {
+      resultado.push({ ...a, cantidad: Math.min(a.cantidad, a.stock) });
+    } else {
+      const stock = Math.max(resultado[i].stock, a.stock);
+      resultado[i] = { ...a, stock, cantidad: Math.min(resultado[i].cantidad + a.cantidad, stock) };
+    }
+  }
+  return resultado.filter((l) => l.cantidad > 0);
+}
