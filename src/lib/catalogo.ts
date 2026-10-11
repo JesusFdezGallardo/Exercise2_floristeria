@@ -1,5 +1,5 @@
 // Busqueda y filtros del catalogo: se resuelven en el SERVIDOR con Prisma a partir de la URL.
-//   /?q=reloj&categoria=relojes&min=50&max=100&orden=precio-desc
+//   /?q=rosas&categoria=amor&min=40&max=60&orden=precio-desc
 import type { Prisma } from "@/generated/prisma/client";
 import { leerOrden, orderByDe, type Orden } from "@/lib/orden";
 import { prisma } from "@/lib/prisma";

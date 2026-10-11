@@ -84,7 +84,7 @@ y `catalogo.ts` multiplica por 100. Los datos del seed también están en cénti
 ## Catalogo
 
 ### Todo vive en la URL
-Busqueda, categoria, precio y orden son parametros de la URL (`/?q=reloj&categoria=relojes&orden=precio-desc`).
+Busqueda, categoria, precio y orden son parametros de la URL (`/?q=rosas&categoria=amor&orden=precio-desc`).
 No hay estado en el navegador: `Filtros` es un Server Component, los chips son enlaces y la busqueda es un `<Form>` GET.
 Consecuencia: **si anades un parametro nuevo**, hay que conservarlo en tres sitios de `src/components/filtros.tsx`:
 la funcion `urlCon`, un `<input type="hidden">` dentro del formulario y su lectura en `leerFiltros` (`catalogo.ts`).
