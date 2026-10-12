@@ -26,7 +26,7 @@ export function BotonPagar({ lineas, conSesion }: { lineas: LineaCarrito[]; conS
   function pagar() {
     empezar(async () => {
       // Si todo va bien, la accion redirige a Stripe y esta linea nunca devuelve nada
-      const r = await crearCheckout(lineas.map((l) => ({ id: l.id, cantidad: l.cantidad })));
+      const r = await crearCheckout(lineas.map((l) => ({ id: l.id, cantidad: l.cantidad })), {});
       if (r?.necesitaLogin) router.push(ENTRAR); // la sesion caduco mientras tanto
       else if (r?.error) toast.error(r.error);
     });

@@ -77,13 +77,24 @@ model Pedido {
   id              Int           @id @default(autoincrement())
   email           String
   estado          EstadoPedido  @default(PENDIENTE)
-  total           Int // en centimos
+  total           Int // en centimos: productos + gastosEnvio (lo que cobra Stripe)
   stripeSessionId String?       @unique // enlaza el pedido con el pago en Stripe
   creadoEn        DateTime      @default(now())
   actualizadoEn   DateTime      @updatedAt
   lineas          LineaPedido[]
   usuario         Usuario?      @relation(fields: [usuarioId], references: [id])
   usuarioId       Int? // opcional: los pedidos de antes de las cuentas no tienen dueño
+
+  // Entrega: se copia al comprar (como precioUnitario), asi el pedido no cambia si luego cambian las tarifas.
+  // Todo null en los pedidos anteriores a los envios; que sea obligatoria lo exige crearCheckout, no la BD.
+  envioNombre    String? // quien recibe el ramo
+  envioTelefono  String?
+  envioDireccion String? // calle, numero, piso
+  envioCp        String? // texto: "08208" (un Int perderia el 0 inicial)
+  envioCiudad    String?
+  envioZona      String? // nombre de la zona tal como se cobro: "Reparto en Sabadell"
+  gastosEnvio    Int     @default(0) // en centimos; 0 si fue gratis. Va incluido en total
+  mensajeTarjeta String? // opcional, maximo 200 caracteres
 
   @@index([usuarioId])
 }
