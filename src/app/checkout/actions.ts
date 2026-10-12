@@ -32,12 +32,12 @@ export async function crearCheckout(
   );
   if (limpios.length === 0) return { error: "El carrito está vacío" };
 
-  // 3. Precios y stock de VERDAD, desde la base de datos
-  const productos = await prisma.producto.findMany({ where: { id: { in: limpios.map((a) => a.id) } } });
+  // 3. Precios y stock de VERDAD, desde la base de datos. Un producto oculto desde el admin ya no se vende
+  const productos = await prisma.producto.findMany({ where: { id: { in: limpios.map((a) => a.id) }, visible: true } });
   const lineas = [];
   for (const a of limpios) {
     const p = productos.find((x) => x.id === a.id);
-    if (!p) return { error: "Un producto del carrito ya no existe" };
+    if (!p) return { error: "Un producto del carrito ya no está disponible" };
     if (p.stock < a.cantidad) return { error: `Solo quedan ${p.stock} unidades de ${p.nombre}` };
     lineas.push({ producto: p, cantidad: a.cantidad });
   }

@@ -1,7 +1,7 @@
 // Busqueda y filtros del catalogo: se resuelven en el SERVIDOR con Prisma a partir de la URL.
 //   /?q=rosas&categoria=amor&min=40&max=60&orden=precio-desc
-import type { Prisma } from "@/generated/prisma/client";
-import { escaparLike, normalizar } from "@/lib/busqueda";
+// El where se construye en catalogo-where.ts (puro, con test) y siempre deja fuera los productos ocultos.
+import { whereDe } from "@/lib/catalogo-where";
 import { leerOrden, orderByDe, type Orden } from "@/lib/orden";
 import { prisma } from "@/lib/prisma";
 
@@ -21,19 +21,8 @@ export function leerFiltros(sp: Record<string, string | string[] | undefined>): 
 }
 
 export async function buscarProductos(f: Filtros) {
-  const where: Prisma.ProductoWhereInput = {};
-  // Sin tildes ni mayusculas: "peonias" encuentra "Ramo de peonías rosas" (ver src/lib/busqueda.ts)
-  if (f.q) where.nombreBusqueda = { contains: escaparLike(normalizar(f.q)) }; // LIKE '%q%' sobre el nombre normalizado
-  if (f.categoria) where.categoria = { slug: f.categoria };
-  if (f.min !== null || f.max !== null) {
-    // el usuario escribe euros; en la base guardamos centimos
-    where.precio = {
-      ...(f.min !== null && { gte: Math.round(f.min * 100) }),
-      ...(f.max !== null && { lte: Math.round(f.max * 100) }),
-    };
-  }
   return prisma.producto.findMany({
-    where,
+    where: whereDe(f),
     include: { categoria: { select: { nombre: true } } },
     orderBy: orderByDe(f.orden),
   });

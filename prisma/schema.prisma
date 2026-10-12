@@ -28,6 +28,7 @@ model Producto {
   precio         Int // en CENTIMOS: 4990 = 49,90 EUR (nunca decimales para dinero)
   imagen         String // ruta en /public o URL
   stock          Int      @default(0)
+  visible        Boolean  @default(true) // false = oculto: fuera del catalogo y de la compra; los pedidos antiguos lo siguen viendo
   creadoEn       DateTime @default(now())
 
   categoria   Categoria     @relation(fields: [categoriaId], references: [id])
