@@ -56,9 +56,14 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
   las dos con `src/components/pagina-404.tsx`. La de la ficha llega en streaming: `curl` no ve el texto, un navegador sí.
 - **Lista del admin:** toda la fila abre el pedido con un `::after` estirado (`src/app/admin/page.tsx`); un botón
   nuevo dentro de la fila necesita `relative z-10` para no quedar tapado.
+- **Admin de productos** (`/admin/productos`): edita datos y stock; no crea ni borra (se oculta con
+  `Producto.visible`). Los ocultos se filtran en `whereDe` (`src/lib/catalogo-where.ts`), la ficha y `crearCheckout`;
+  el webhook no filtra. El stock solo cambia en `reponerStock` (increment), `corregirStock` (solo si sigue siendo el
+  `stockLeido` del formulario), el webhook y el seed. `alReponer` (`src/lib/reposicion.ts`) es el único punto que sabe
+  que un producto vuelve a tener stock.
 - **Búsqueda sin tildes:** el catálogo busca en `Producto.nombreBusqueda` (nombre en minúsculas y sin tildes, con
   `normalizar()` y `escaparLike()` de `src/lib/busqueda.ts`). Quien cree o renombre productos tiene que rellenarla;
-  hoy solo lo hace el seed.
+  hoy lo hacen el seed y `guardarProducto` (admin de productos).
 - **Emails:** sin dominio propio, Resend solo envía desde `onboarding@resend.dev` y a la dirección de la cuenta; si
   `EMAIL_PRUEBAS` tiene valor, todos los emails van ahí (`src/lib/email.ts`).
 
