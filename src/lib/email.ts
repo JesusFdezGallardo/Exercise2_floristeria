@@ -1,32 +1,8 @@
-// Email de confirmacion de pedido con Resend. Solo se llama desde el WEBHOOK (el punto fiable).
+// Envio del email de confirmacion con Resend. Solo se llama desde el WEBHOOK (el punto fiable). La plantilla, en plantilla-email.ts.
 import "server-only";
 import { Resend } from "resend";
-import { formatearPrecio } from "@/lib/formato";
+import { plantillaConfirmacion, type PedidoEmail } from "@/lib/plantilla-email";
 import { TIENDA } from "@/lib/tienda";
-
-type LineaEmail = { nombre: string; cantidad: number; precioUnitario: number };
-type PedidoEmail = { id: number; email: string; total: number; lineas: LineaEmail[] };
-
-// Plantilla HTML sencilla: tablas y estilos en linea, que es lo que entienden todos los clientes de correo
-export function plantillaConfirmacion(p: PedidoEmail): string {
-  const filas = p.lineas
-    .map(
-      (l) => `<tr>
-        <td style="padding:8px 0">${l.cantidad} × ${l.nombre}</td>
-        <td style="padding:8px 0;text-align:right">${formatearPrecio(l.precioUnitario * l.cantidad)}</td>
-      </tr>`
-    )
-    .join("");
-  return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1F2A22">
-    <h1 style="font-size:22px;color:#3F6B4A">Gracias por tu compra en ${TIENDA.nombre}</h1>
-    <p>Hemos recibido el pago de tu pedido <strong>#${p.id}</strong>. Te avisaremos cuando salga de la tienda.</p>
-    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e5e5">${filas}
-      <tr><td style="padding:12px 0;border-top:1px solid #e5e5e5"><strong>Total</strong></td>
-      <td style="padding:12px 0;border-top:1px solid #e5e5e5;text-align:right"><strong>${formatearPrecio(p.total)}</strong></td></tr>
-    </table>
-    <p style="color:#737373;font-size:12px">Tienda ficticia (material de clase). Pago en modo test: no se ha cobrado nada.</p>
-  </div>`;
-}
 
 export async function enviarConfirmacion(p: PedidoEmail) {
   const clave = process.env.RESEND_API_KEY;
