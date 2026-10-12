@@ -39,6 +39,9 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
   solo crea clientes. Después de `npm run seed` hay que volver a crearlo.
 - **Pagar exige sesión:** `crearCheckout` devuelve `necesitaLogin` sin usuario; el pedido nace con `usuarioId` y el
   email de la cuenta (`customer_email` en Stripe). El webhook ya no sobrescribe el email (salvo pedidos sin dueño).
+- **Envíos por código postal:** la entrega se pide en `/checkout/envio`, antes de pagar. Las tarifas están solo en
+  `TARIFAS_ENVIO` (`src/lib/envio.ts`) y `crearCheckout` recalcula el envío con los precios de la BD. El pedido
+  copia la entrega y `gastosEnvio`, y `total` ya los incluye.
 - **La marca en un solo sitio:** el nombre está solo en `src/lib/tienda.ts` (`tests/marca.test.ts` falla si aparece
   en otro archivo de `src/`, o escrito sin tilde en `src`, `prisma` o `public`, aunque sea en un comentario);
   los colores, en `:root` de `src/app/globals.css` (`tests/tema.test.ts` exige contraste AA).

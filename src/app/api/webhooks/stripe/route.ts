@@ -7,6 +7,7 @@
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { enviarConfirmacion } from "@/lib/email";
+import { entregaDelPedido } from "@/lib/envio";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
@@ -63,6 +64,9 @@ export async function POST(req: Request) {
           id: pedidoId,
           email,
           total: pedido.total,
+          gastosEnvio: pedido.gastosEnvio,
+          envioZona: pedido.envioZona,
+          entrega: entregaDelPedido(pedido),
           lineas: pedido.lineas.map((l) => ({ nombre: l.producto.nombre, cantidad: l.cantidad, precioUnitario: l.precioUnitario })),
         });
       } catch (e) {

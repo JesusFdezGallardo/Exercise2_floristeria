@@ -79,6 +79,28 @@ euros al pintarlos (`src/lib/formato.ts`) y al leer los filtros de precio del ca
 y `catalogo.ts` multiplica por 100. Los datos del seed también están en céntimos, y `tests/catalogo-datos.test.ts`
 comprueba que ninguno se ha escrito en euros.
 
+### Envíos
+
+- **Dónde se pide la entrega:** en `/checkout/envio` (`src/components/formulario-envio.tsx`), entre el carrito y
+  Stripe. Va antes del pago porque el envío forma parte de lo que se cobra.
+- **Tarifas:** solo en `TARIFAS_ENVIO` de `src/lib/envio.ts`, en céntimos: Sabadell (CP 08201 a 08208, reparto
+  propio), provincia de Barcelona (08) y resto de la península (mensajería). A Baleares (07), Canarias (35, 38),
+  Ceuta (51) y Melilla (52) no se envía. El test `tests/envio.test.ts` fija la tabla: si cambias un precio, cambia
+  también el test.
+- **Cambiar un precio solo afecta a los pedidos nuevos:** el pedido copia la entrega, `envioZona` (el nombre de la
+  zona) y `gastosEnvio` al crearse, igual que `precioUnitario`. `Pedido.total` = productos + `gastosEnvio`, que es lo
+  que cobra Stripe.
+- **El envío que vale lo calcula el servidor:** el formulario solo enseña una vista previa con los precios del
+  carrito. `crearCheckout` vuelve a validar la entrega (`validarEntrega`) y a calcular el envío con el subtotal de la
+  BD. Así el envío gratis no se decide con precios viejos o manipulados.
+- **En Stripe** el envío va como una única `shipping_options` ya calculada (`src/lib/pago.ts`). No hay eventos nuevos
+  ni variables de entorno.
+- **El email escapa la entrega** (`escaparHtml` de `src/lib/plantilla-email.ts`): la dirección y el mensaje los
+  escribe el cliente. La plantilla importa con rutas relativas, no con `@/`, porque Vitest no conoce el alias.
+- **Pedidos de antes de los envíos:** no tienen entrega (`entregaDelPedido` devuelve `null`) y su `gastosEnvio` vale
+  0. Se pintan como antes.
+- **La página de éxito no muestra la dirección:** la abre cualquiera que tenga el `session_id`.
+
 ---
 
 ## Catálogo

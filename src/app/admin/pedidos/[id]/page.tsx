@@ -4,9 +4,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BadgeEstado } from "@/components/badge-estado";
 import { CambiarEstado } from "@/components/cambiar-estado";
+import { BloqueEntrega, ResumenPedido } from "@/components/resumen-pedido";
 import { SinAcceso } from "@/components/sin-acceso";
 import { TRANSICIONES_ADMIN } from "@/lib/estados";
-import { formatearPrecio } from "@/lib/formato";
+import { entregaDelPedido } from "@/lib/envio";
 import { prisma } from "@/lib/prisma";
 import { usuarioActual } from "@/lib/sesion";
 
@@ -29,6 +30,7 @@ export default async function DetallePedido({ params }: Props) {
     include: { lineas: { include: { producto: { select: { nombre: true } } } } },
   });
   if (!pedido) notFound();
+  const entrega = entregaDelPedido(pedido);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
@@ -43,19 +45,9 @@ export default async function DetallePedido({ params }: Props) {
         <dt className="text-muted-foreground">Actualizado</dt><dd>{pedido.actualizadoEn.toLocaleString("es-ES", { timeZone: "Europe/Madrid" })}</dd>
         <dt className="text-muted-foreground">Pago en Stripe</dt><dd className="truncate font-mono text-xs">{pedido.stripeSessionId ?? "-"}</dd>
       </dl>
-      <div className="rounded-xl border p-5">
-        <ul className="space-y-1 text-sm">
-          {pedido.lineas.map((l) => (
-            <li key={l.id} className="flex justify-between">
-              <span>{l.cantidad} × {l.producto.nombre}</span>
-              <span className="tabular-nums">{formatearPrecio(l.precioUnitario * l.cantidad)}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 flex justify-between border-t pt-3 font-semibold">
-          <span>Total</span><span>{formatearPrecio(pedido.total)}</span>
-        </p>
-      </div>
+      {/* La floristeria necesita saber adonde llevarlo, a quien y que escribir en la tarjeta */}
+      {entrega && <BloqueEntrega entrega={entrega} />}
+      <ResumenPedido lineas={pedido.lineas} total={pedido.total} gastosEnvio={pedido.gastosEnvio} envioZona={pedido.envioZona} />
       <CambiarEstado pedidoId={pedido.id} posibles={TRANSICIONES_ADMIN[pedido.estado]} />
     </main>
   );

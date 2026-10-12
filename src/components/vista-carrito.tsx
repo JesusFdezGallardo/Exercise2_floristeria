@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { BotonPagar } from "@/components/boton-pagar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatearPrecio } from "@/lib/formato";
 import { calcularTotal, contarArticulos, useCarrito } from "@/store/carrito";
+
+const ENTRAR = "/entrar?callbackUrl=%2Fcheckout%2Fenvio";
 
 export function VistaCarrito({ conSesion }: { conSesion: boolean }) {
   const { lineas, cambiarCantidad, quitar, vaciar } = useCarrito();
@@ -61,9 +62,12 @@ export function VistaCarrito({ conSesion }: { conSesion: boolean }) {
         </div>
       </div>
       <div className="flex justify-end">
-        <BotonPagar lineas={lineas} conSesion={conSesion} />
+        {/* Sin sesion, a entrar y de vuelta al paso de entrega */}
+        <Button size="lg" render={<Link href={conSesion ? "/checkout/envio" : ENTRAR} />} nativeButton={false} className="px-8">
+          {conSesion ? "Continuar con el envío" : "Entrar para continuar"}
+        </Button>
       </div>
-      <p className="text-right text-xs text-muted-foreground">Pago seguro con Stripe (modo test: no se cobra nada)</p>
+      <p className="text-right text-xs text-muted-foreground">Los gastos de envío se calculan con el código postal</p>
     </div>
   );
 }
