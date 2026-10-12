@@ -1,4 +1,4 @@
-// Pagina de entrada. Aqui manda el middleware (con ?callbackUrl=) y el boton de pagar sin sesion.
+// Pagina de entrada. Aqui manda el middleware (con ?callbackUrl=) y el carrito sin sesion.
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { FormularioEntrar } from "@/components/formulario-entrar";
