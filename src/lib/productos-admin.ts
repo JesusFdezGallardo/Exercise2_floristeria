@@ -63,7 +63,7 @@ export function validarProducto(
   }
 
   const precio = leerPrecio(d.precio);
-  if (precio === null) errores.precio = "Escribe un precio entre 0,50 € y 1.000 € (por ejemplo, 45,90)";
+  if (precio === null) errores.precio = "Escribe un precio entre 0,50 y 1000 €, sin punto de miles (por ejemplo, 45,90)";
 
   const categoriaTexto = texto(d.categoriaId);
   const categoriaId = /^\d{1,9}$/.test(categoriaTexto) ? Number(categoriaTexto) : 0;

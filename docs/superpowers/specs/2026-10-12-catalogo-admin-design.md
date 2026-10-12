@@ -52,7 +52,7 @@ visible Boolean @default(true) // false = oculto: fuera del catálogo y de la co
 |---|---|
 | `src/lib/catalogo.ts` (lista y búsqueda) | No aparece. El `where` se extrae a una función pura `whereDe(f)` en `src/lib/catalogo-where.ts` (sin Prisma, para testearla sin BD) que siempre lleva `visible: true`. |
 | `src/app/producto/[id]/page.tsx` | `notFound()`: la 404 de la ficha. |
-| `src/app/checkout/actions.ts` | Mismo error que un producto inexistente: "Un producto del carrito ya no está disponible". |
+| `src/app/checkout/actions.ts` | Error que nombra el producto: "Centro de lirios ya no está disponible: quítalo del carrito" (`lineasDelCarrito`, `src/lib/pago.ts`, con test). |
 | Webhook de Stripe | **No filtra**: si se pagó antes de ocultarlo, el pedido se marca PAGADO y descuenta stock igual. |
 | Admin (lista y ficha de productos) | Se ve, con la insignia *Oculto*, para poder volver a mostrarlo. |
 | Pedidos (admin, Mis pedidos, emails) | Sin cambios: leen el producto por su relación con la línea. |

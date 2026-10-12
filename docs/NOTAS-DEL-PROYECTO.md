@@ -213,7 +213,8 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
   corregir stock). No se crean ni se borran productos desde la web: uno nuevo entra por `prisma/catalogo-datos.ts`
   con su SVG. "Borrar" es **ocultar** (`Producto.visible = false`), porque los pedidos antiguos apuntan al producto.
 - Un producto oculto se filtra en tres sitios: `whereDe` (`src/lib/catalogo-where.ts`, catálogo y búsqueda), la ficha
-  pública (`findFirst` con `visible: true`, da 404) y `crearCheckout` (no se puede pagar aunque siga en un carrito).
+  pública (`findFirst` con `visible: true`, da 404) y `crearCheckout` (no se puede pagar aunque siga en un carrito: `lineasDelCarrito` de `src/lib/pago.ts` devuelve
+  "<nombre> ya no está disponible: quítalo del carrito", para que el cliente sepa qué línea quitar).
   El webhook no filtra: lo que se pagó antes de ocultarlo se cobra y descuenta stock igual. Un sitio nuevo que liste
   productos para la tienda tiene que filtrar también.
 - El slug y la imagen no se editan: renombrar un producto no cambia su URL ni su ilustración.

@@ -86,7 +86,7 @@ describe("validarProducto", () => {
       errores: {
         nombre: "Escribe el nombre del producto",
         descripcion: "Escribe una descripción",
-        precio: "Escribe un precio entre 0,50 € y 1.000 € (por ejemplo, 45,90)",
+        precio: "Escribe un precio entre 0,50 y 1000 €, sin punto de miles (por ejemplo, 45,90)",
         categoriaId: "Elige una categoría de la lista",
       },
     });
