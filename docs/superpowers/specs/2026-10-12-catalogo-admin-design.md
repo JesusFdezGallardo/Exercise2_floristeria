@@ -74,27 +74,29 @@ Sin BD ni Node, con test en `tests/productos-admin.test.ts`.
   y decimal por separado).
 - **`leerUnidades(texto, { min, max })`** → entero o `null`. Solo dígitos. Reponer usa `{ min: 1, max: 500 }`;
   Corregir, `{ min: 0, max: 500 }`.
-- **`esReposicion(antes, despues)`** → `antes === 0 && despues > 0`.
+- **`esReposicion(antes, despues)`** → `antes <= 0 && despues > 0`. Con `<= 0` y no `=== 0`: sin reserva de stock,
+  dos ventas a la vez de la última unidad dejan el stock en -1, y reponer desde ahí también es una reposición.
 
 ## Acciones (`src/app/admin/productos/actions.ts`)
 
-Las tres empiezan con `exigirAdmin()` (una Server Action es un endpoint público), devuelven un estado para
-`useActionState` y terminan con `revalidatePath` de `/admin/productos`, `/admin/productos/[id]`, `/producto/[id]` y `/`.
+Las tres empiezan con `exigirAdmin()` (una Server Action es un endpoint público), reciben el id del producto en un
+`input hidden` llamado `id` (validado como entero positivo), devuelven un estado para `useActionState` y terminan con `revalidatePath` de `/admin/productos`, `/admin/productos/[id]`, `/producto/[id]` y `/`.
 
-1. **`guardarProducto(id, estadoPrevio, formData)`**: valida con `validarProducto`, comprueba que el producto y la
+1. **`guardarProducto(estadoPrevio, formData)`**: valida con `validarProducto`, comprueba que el producto y la
    categoría existen y actualiza nombre, descripción, precio, categoría y `visible`. Recalcula
    `nombreBusqueda = normalizar(nombre)`. **No toca el stock.** Devuelve `{ errores }` o `{ ok: "Guardado" }`.
-2. **`reponerStock(id, estadoPrevio, formData)`**: lee N con `leerUnidades(…, { min: 1, max: 500 })` y hace
+2. **`reponerStock(estadoPrevio, formData)`**: lee N con `leerUnidades(…, { min: 1, max: 500 })` y hace
    `update({ data: { stock: { increment: N } } })`, que devuelve el stock nuevo. Si `esReposicion(nuevo - N, nuevo)`,
    llama a `alReponer(id)`. Devuelve `{ ok: "Stock: 3 → 13" }`.
-3. **`corregirStock(id, estadoPrevio, formData)`**: lee N con `leerUnidades(…, { min: 0, max: 500 })` y el
+3. **`corregirStock(estadoPrevio, formData)`**: lee N con `leerUnidades(…, { min: 0, max: 500 })` y el
    `stockLeido` del campo oculto, y hace `updateMany({ where: { id, stock: stockLeido }, data: { stock: N } })`.
    - Si cuenta 0 filas: relee el producto. Si no existe, `{ error: "El producto no existe" }`; si existe, devuelve
-     `{ error: "El stock ha cambiado mientras editabas: ahora hay X", stockActual: X }`.
+     `{ error: "El stock ha cambiado mientras editabas: ahora hay X" }` y revalida la página, que se vuelve a pintar
+     con X (también en `stockLeido`).
    - Si cuenta 1: si `esReposicion(stockLeido, N)`, llama a `alReponer(id)`. Devuelve `{ ok: "Stock: 5 → 4" }`.
 
-**`alReponer(productoId)`** (`src/lib/reposicion.ts`): en esta parte es una función vacía con un comentario que explica
-que es el gancho de los avisos de reposición. Es el único sitio que sabe que un producto ha vuelto a estar disponible.
+**`alReponer(productoId)`** (`src/lib/reposicion.ts`): en esta parte solo escribe una línea en el log del servidor
+(sirve para comprobarlo a mano), con un comentario que explica que es el gancho de los avisos de reposición. Es el único sitio que sabe que un producto ha vuelto a estar disponible.
 
 Quién cambia el stock tras esta parte: `reponerStock`, `corregirStock`, el webhook (descuenta al pagar) y el seed.
 
@@ -108,7 +110,7 @@ Quién cambia el stock tras esta parte: `reponerStock`, `corregirStock`, el webh
 
 **`/admin/productos`** (Server Component, `force-dynamic`):
 - Tabla con Producto (enlace), Categoría, Precio, Stock y Estado.
-- Estado: insignia *Agotado* (stock 0) y/o *Oculto* (`visible = false`); nada si está a la venta.
+- Estado: insignia *Agotado* (stock 0 o negativo) y/o *Oculto* (`visible = false`); nada si está a la venta.
 - Orden: primero los agotados, después por nombre.
 - Toda la fila abre la ficha con el `::after` estirado, como la lista de pedidos.
 - Sin filtros ni paginación (son unos diez productos).
@@ -121,7 +123,8 @@ Quién cambia el stock tras esta parte: `reponerStock`, `corregirStock`, el webh
      y el foco va al primero con error, como en el formulario de entrega. Los valores escritos se conservan tras un error.
   2. **Reponer** (`src/components/formulario-reponer.tsx`): "Stock actual: N", campo de unidades y botón "Añadir".
   3. **Corregir stock** (`src/components/formulario-corregir-stock.tsx`): campo precargado con el stock y
-     `input hidden` con `stockLeido`. Si la acción devuelve `stockActual`, el campo y el testigo pasan a ese valor.
+     `input hidden` con `stockLeido`, los dos tomados del stock con que se pinta la página. El campo visible es
+     controlado y sigue a ese stock: tras reponer o tras un conflicto pasa al valor nuevo (si no, guardaría el viejo).
      Texto de ayuda: "Para recuentos. Para lo que llega, usa Reponer."
 
 ## Tests
@@ -131,7 +134,7 @@ Quién cambia el stock tras esta parte: `reponerStock`, `corregirStock`, el webh
     `"1000,01"`, `"abc"`, `""`, `"1e3"`, `" "`.
   - `leerUnidades`: límites de Reponer y Corregir; rechaza decimales, signos y texto.
   - `validarProducto`: un error por campo, `trim`, límites de longitud, casilla `visible`.
-  - `esReposicion`: 0→5 sí; 0→0, 3→8 y 5→0 no.
+  - `esReposicion`: 0→5 y -1→4 sí; 0→0, -2→0, 3→8 y 5→0 no.
 - `tests/catalogo.test.ts` (nuevo): `whereDe(f)` lleva siempre `visible: true`, también combinado con búsqueda,
   categoría y precio, y conserva los filtros que ya había.
 - Prueba manual (acciones y páginas tocan BD y sesión):
