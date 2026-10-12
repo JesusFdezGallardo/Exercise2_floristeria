@@ -35,12 +35,15 @@ cada uno en una sola categoría y con precio por unidad. Los datos están en `pr
 - **Categoria** 1 — N **Producto**
 - **Pedido** 1 — N **LineaPedido** N — 1 **Producto**
 - Un pedido tiene un **estado**: PENDIENTE, PAGADO, ENVIADO, ENTREGADO, CANCELADO.
+- Un pedido lleva su **entrega** (destinatario, teléfono, dirección, CP, ciudad y mensaje de tarjeta opcional) y unos
+  **gastos de envío** que dependen del código postal.
 - **Usuario** 1 — N **Pedido** (opcional: los pedidos antiguos no tienen dueño) y 1 — N **Sesion**. Un usuario tiene
   un **rol**: CLIENTE o ADMIN.
 
 ## Fuera de alcance
 
-Recuperar la contraseña, cupones, varias monedas, gestión de stock en tiempo real, envíos reales, flor suelta por tallos,
+Recuperar la contraseña, cupones, varias monedas, gestión de stock en tiempo real, integración con transportistas (etiquetas,
+seguimiento, precios en tiempo real), fecha de entrega, envíos fuera de la península, flor suelta por tallos,
 personalizar el ramo, marcas.
 
 ## Reglas que no se negocian
