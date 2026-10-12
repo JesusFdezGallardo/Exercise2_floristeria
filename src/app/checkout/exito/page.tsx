@@ -3,9 +3,9 @@
 // Si el cliente cierra el navegador en Stripe, nunca llega aqui... y el pedido se confirma igual.
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ResumenPedido } from "@/components/resumen-pedido";
 import { VaciarCarrito } from "@/components/vaciar-carrito";
 import { Button } from "@/components/ui/button";
-import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Gracias por tu compra" };
@@ -42,23 +42,14 @@ export default async function PaginaExito({ searchParams }: Props) {
               Estamos confirmando tu pago con el banco. Recibirás un email en cuanto esté listo.
             </p>
           )}
-          <div className="rounded-xl border p-5">
-            <p className="text-sm text-muted-foreground">Pedido #{pedido.id} · estado {pedido.estado}</p>
-            <ul className="mt-3 space-y-1 text-sm">
-              {pedido.lineas.map((l) => (
-                <li key={l.id} className="flex justify-between">
-                  <span>
-                    {l.cantidad} × {l.producto.nombre}
-                  </span>
-                  <span>{formatearPrecio(l.precioUnitario * l.cantidad)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 flex justify-between border-t pt-3 font-semibold">
-              <span>Total</span>
-              <span>{formatearPrecio(pedido.total)}</span>
-            </p>
-          </div>
+          {/* Sin la entrega: esta pagina la abre cualquiera que tenga el session_id */}
+          <ResumenPedido
+            lineas={pedido.lineas}
+            total={pedido.total}
+            gastosEnvio={pedido.gastosEnvio}
+            envioZona={pedido.envioZona}
+            cabecera={<p className="text-sm text-muted-foreground">Pedido #{pedido.id} · estado {pedido.estado}</p>}
+          />
         </>
       )}
       <Button render={<Link href="/" />} nativeButton={false} className="self-start">
