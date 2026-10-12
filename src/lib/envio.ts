@@ -55,6 +55,11 @@ export type DatosEntrega = Record<CampoEntrega, string>; // tal cual lo escribe 
 export type Entrega = Omit<DatosEntrega, "mensaje"> & { mensaje: string | null }; // normalizada; sin mensaje = null
 export type ErroresEntrega = Partial<Record<CampoEntrega, string>>;
 
+// Orden de los campos en el formulario: el primero con error es al que se lleva el foco
+const ORDEN_CAMPOS: CampoEntrega[] = ["nombre", "telefono", "direccion", "cp", "ciudad", "mensaje"];
+export const primerCampoConError = (errores: ErroresEntrega): CampoEntrega | null =>
+  ORDEN_CAMPOS.find((c) => errores[c]) ?? null;
+
 // Lo que llega a la Server Action puede ser cualquier cosa: lo que no es texto cuenta como vacio
 const texto = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 

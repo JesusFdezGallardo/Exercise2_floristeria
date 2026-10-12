@@ -9,7 +9,7 @@ import { crearCheckout } from "@/app/checkout/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { calcularEnvio, MAX_MENSAJE, type CampoEntrega, type DatosEntrega, type ErroresEntrega } from "@/lib/envio";
+import { calcularEnvio, MAX_MENSAJE, primerCampoConError, type CampoEntrega, type DatosEntrega, type ErroresEntrega } from "@/lib/envio";
 import { formatearPrecio } from "@/lib/formato";
 import { calcularTotal, useCarrito } from "@/store/carrito";
 
@@ -49,7 +49,13 @@ export function FormularioEnvio() {
       // Si todo va bien, la accion redirige a Stripe y esta linea nunca devuelve nada
       const r = await crearCheckout(lineas.map((l) => ({ id: l.id, cantidad: l.cantidad })), datos);
       if (r?.necesitaLogin) router.push(ENTRAR); // la sesion caduco mientras rellenaba
-      else if (r?.errores) setErrores(r.errores);
+      else if (r?.errores) {
+        setErrores(r.errores);
+        // En el movil los campos quedan por encima del boton: sin esto, parece que "Pagar" no hace nada
+        toast.error("Revisa los datos de entrega");
+        const campo = primerCampoConError(r.errores);
+        if (campo) document.getElementsByName(campo)[0]?.focus();
+      }
       else if (r?.error) toast.error(r.error);
     });
   }

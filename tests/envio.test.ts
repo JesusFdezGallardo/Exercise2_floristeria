@@ -1,6 +1,6 @@
 // Gastos de envio por codigo postal: zonas, envio gratis y codigos rechazados. Sin BD ni Stripe.
 import { describe, expect, it } from "vitest";
-import { calcularEnvio, entregaDelPedido, MAX_MENSAJE, TARIFAS_ENVIO, validarEntrega } from "../src/lib/envio";
+import { calcularEnvio, entregaDelPedido, MAX_MENSAJE, primerCampoConError, TARIFAS_ENVIO, validarEntrega } from "../src/lib/envio";
 
 const { SABADELL, PROVINCIA, PENINSULA } = TARIFAS_ENVIO;
 
@@ -176,5 +176,17 @@ describe("entregaDelPedido", () => {
     expect(entregaDelPedido({
       envioNombre: null, envioTelefono: null, envioDireccion: null, envioCp: null, envioCiudad: null, mensajeTarjeta: null,
     })).toBeNull();
+  });
+});
+
+describe("primerCampoConError", () => {
+  // El formulario lleva ahi el foco: en el movil los errores quedan por encima del boton de pagar, fuera de la pantalla
+  it("devuelve el primer campo con error en el orden del formulario, no en el del objeto", () => {
+    expect(primerCampoConError({ ciudad: "x", telefono: "x", mensaje: "x" })).toBe("telefono");
+    expect(primerCampoConError({ mensaje: "x", cp: "x" })).toBe("cp");
+  });
+  it("sin errores devuelve null", () => {
+    expect(primerCampoConError({})).toBeNull();
+    expect(primerCampoConError({ nombre: undefined })).toBeNull();
   });
 });
