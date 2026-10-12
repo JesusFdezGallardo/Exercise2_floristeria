@@ -45,3 +45,79 @@ export function calcularEnvio(cpBruto: string, subtotal: number): ResultadoEnvio
     faltaParaGratis: gratisDesde === null || gratis ? null : gratisDesde - subtotal,
   };
 }
+
+// ---- La entrega: a quien y donde se lleva el ramo ----
+
+export const MAX_MENSAJE = 200; // caracteres de la tarjeta (el textarea usa el mismo limite)
+
+export type CampoEntrega = "nombre" | "telefono" | "direccion" | "cp" | "ciudad" | "mensaje";
+export type DatosEntrega = Record<CampoEntrega, string>; // tal cual lo escribe el formulario
+export type Entrega = Omit<DatosEntrega, "mensaje"> & { mensaje: string | null }; // normalizada; sin mensaje = null
+export type ErroresEntrega = Partial<Record<CampoEntrega, string>>;
+
+// Lo que llega a la Server Action puede ser cualquier cosa: lo que no es texto cuenta como vacio
+const texto = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+// Sin espacios, guiones, puntos ni +34 tienen que quedar 9 cifras que empiecen por 6, 7, 8 o 9 (moviles y fijos)
+function normalizarTelefono(bruto: string): string | null {
+  if (bruto.length > 25) return null; // acotar antes de recorrer
+  let t = "";
+  for (const c of bruto) if (c !== " " && c !== "-" && c !== ".") t += c;
+  if (t.startsWith("+34")) t = t.slice(3);
+  if (t.length !== 9 || !"6789".includes(t[0])) return null;
+  return [...t].every((c) => c >= "0" && c <= "9") ? t : null;
+}
+
+export function validarEntrega(
+  datos: Partial<Record<CampoEntrega, unknown>>,
+): { ok: true; entrega: Entrega } | { ok: false; errores: ErroresEntrega } {
+  const errores: ErroresEntrega = {};
+
+  const nombre = texto(datos.nombre);
+  if (nombre.length < 2) errores.nombre = "Escribe el nombre de quien recibe el ramo";
+  else if (nombre.length > 80) errores.nombre = "El nombre es demasiado largo";
+
+  const telefono = normalizarTelefono(texto(datos.telefono));
+  if (telefono === null) errores.telefono = "Escribe un teléfono español de 9 cifras";
+
+  const direccion = texto(datos.direccion);
+  if (direccion.length < 5) errores.direccion = "Escribe la calle, el número y el piso";
+  else if (direccion.length > 150) errores.direccion = "La dirección es demasiado larga";
+
+  const cp = texto(datos.cp).replaceAll(" ", "");
+  const envio = calcularEnvio(cp, 0); // aqui solo importa si hay reparto; el coste se calcula con el subtotal real
+  if (!envio.ok) errores.cp = envio.error;
+
+  const ciudad = texto(datos.ciudad);
+  if (ciudad.length < 2) errores.ciudad = "Escribe la ciudad";
+  else if (ciudad.length > 60) errores.ciudad = "El nombre de la ciudad es demasiado largo";
+
+  const mensaje = texto(datos.mensaje);
+  if (mensaje.length > MAX_MENSAJE) errores.mensaje = `El mensaje no puede pasar de ${MAX_MENSAJE} caracteres`;
+
+  if (Object.keys(errores).length > 0 || telefono === null) return { ok: false, errores };
+  return { ok: true, entrega: { nombre, telefono, direccion, cp, ciudad, mensaje: mensaje === "" ? null : mensaje } };
+}
+
+// Los campos de entrega tal como se guardan en Pedido
+export type CamposEntregaPedido = {
+  envioNombre: string | null;
+  envioTelefono: string | null;
+  envioDireccion: string | null;
+  envioCp: string | null;
+  envioCiudad: string | null;
+  mensajeTarjeta: string | null;
+};
+
+// La entrega de un pedido, o null si es de antes de los envios (no tiene)
+export function entregaDelPedido(p: CamposEntregaPedido): Entrega | null {
+  if (!p.envioNombre || !p.envioTelefono || !p.envioDireccion || !p.envioCp || !p.envioCiudad) return null;
+  return {
+    nombre: p.envioNombre,
+    telefono: p.envioTelefono,
+    direccion: p.envioDireccion,
+    cp: p.envioCp,
+    ciudad: p.envioCiudad,
+    mensaje: p.mensajeTarjeta,
+  };
+}

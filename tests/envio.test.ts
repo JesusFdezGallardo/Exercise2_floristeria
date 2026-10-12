@@ -1,6 +1,6 @@
 // Gastos de envio por codigo postal: zonas, envio gratis y codigos rechazados. Sin BD ni Stripe.
 import { describe, expect, it } from "vitest";
-import { calcularEnvio, TARIFAS_ENVIO } from "../src/lib/envio";
+import { calcularEnvio, entregaDelPedido, MAX_MENSAJE, TARIFAS_ENVIO, validarEntrega } from "../src/lib/envio";
 
 const { SABADELL, PROVINCIA, PENINSULA } = TARIFAS_ENVIO;
 
@@ -76,5 +76,105 @@ describe("calcularEnvio: codigos rechazados", () => {
     const inicio = performance.now();
     expect(calcularEnvio("0".repeat(100_000), 0)).toEqual({ ok: false, error: "Código postal no válido" });
     expect(performance.now() - inicio).toBeLessThan(50);
+  });
+});
+
+const valida = {
+  nombre: "Marta López",
+  telefono: "612 34 56 78",
+  direccion: "Carrer de Gràcia 12, 2º 1ª",
+  cp: "08208",
+  ciudad: "Sabadell",
+  mensaje: "¡Feliz cumpleaños!",
+};
+
+describe("validarEntrega", () => {
+  it("acepta una entrega correcta y la normaliza", () => {
+    expect(validarEntrega({ ...valida, nombre: "  Marta López ", cp: " 08 208 " })).toEqual({
+      ok: true,
+      entrega: { ...valida, telefono: "612345678", cp: "08208" },
+    });
+  });
+  it("el mensaje es opcional: vacio, con espacios o ausente se guarda como null", () => {
+    for (const mensaje of ["", "   ", undefined]) {
+      const r = validarEntrega({ ...valida, mensaje });
+      expect(r.ok && r.entrega.mensaje).toBeNull();
+    }
+  });
+  it("acepta telefonos con +34, espacios, guiones o puntos", () => {
+    for (const telefono of ["+34 612 34 56 78", "+34-612-345-678", "612.345.678", "912345678", "712345678", "812345678"]) {
+      const r = validarEntrega({ ...valida, telefono });
+      expect(r.ok, telefono).toBe(true);
+    }
+  });
+  it("rechaza telefonos que no son de 9 cifras espanolas", () => {
+    for (const telefono of ["", "512345678", "61234567", "6123456789", "+33612345678", "61234567a", "0034612345678"]) {
+      expect(validarEntrega({ ...valida, telefono }), telefono).toEqual({
+        ok: false, errores: { telefono: "Escribe un teléfono español de 9 cifras" },
+      });
+    }
+  });
+  it("respeta los limites de nombre, direccion y ciudad", () => {
+    const err = (campo: string, valor: string) => {
+      const r = validarEntrega({ ...valida, [campo]: valor });
+      return r.ok ? null : r.errores[campo as keyof typeof r.errores];
+    };
+    expect(err("nombre", "a")).toBe("Escribe el nombre de quien recibe el ramo");
+    expect(err("nombre", "ab")).toBeNull();
+    expect(err("nombre", "a".repeat(80))).toBeNull();
+    expect(err("nombre", "a".repeat(81))).toBe("El nombre es demasiado largo");
+    expect(err("direccion", "a".repeat(4))).toBe("Escribe la calle, el número y el piso");
+    expect(err("direccion", "a".repeat(5))).toBeNull();
+    expect(err("direccion", "a".repeat(150))).toBeNull();
+    expect(err("direccion", "a".repeat(151))).toBe("La dirección es demasiado larga");
+    expect(err("ciudad", "a")).toBe("Escribe la ciudad");
+    expect(err("ciudad", "ab")).toBeNull();
+    expect(err("ciudad", "a".repeat(60))).toBeNull();
+    expect(err("ciudad", "a".repeat(61))).toBe("El nombre de la ciudad es demasiado largo");
+  });
+  it("el mensaje admite 200 caracteres y no 201", () => {
+    expect(MAX_MENSAJE).toBe(200);
+    expect(validarEntrega({ ...valida, mensaje: "a".repeat(200) }).ok).toBe(true);
+    expect(validarEntrega({ ...valida, mensaje: "a".repeat(201) })).toEqual({
+      ok: false, errores: { mensaje: "El mensaje no puede pasar de 200 caracteres" },
+    });
+  });
+  it("el CP usa las reglas de calcularEnvio", () => {
+    expect(validarEntrega({ ...valida, cp: "07001" })).toEqual({ ok: false, errores: { cp: "No repartimos en ese código postal" } });
+    expect(validarEntrega({ ...valida, cp: "abc" })).toEqual({ ok: false, errores: { cp: "Código postal no válido" } });
+  });
+  it("devuelve todos los errores a la vez", () => {
+    const r = validarEntrega({});
+    expect(r.ok).toBe(false);
+    expect(Object.keys(r.ok ? {} : r.errores).sort()).toEqual(["ciudad", "cp", "direccion", "nombre", "telefono"]);
+  });
+  it("no se rompe con datos que no son texto (la accion se puede llamar desde fuera)", () => {
+    const r = validarEntrega({ nombre: 42, telefono: null, direccion: { a: 1 }, cp: ["08208"], ciudad: true, mensaje: 7 });
+    expect(r.ok).toBe(false);
+    expect(Object.keys(r.ok ? {} : r.errores).sort()).toEqual(["ciudad", "cp", "direccion", "nombre", "telefono"]);
+  });
+  it("rechaza enseguida textos enormes", () => {
+    const enorme = "6".repeat(100_000);
+    const inicio = performance.now();
+    const r = validarEntrega({ nombre: enorme, telefono: enorme, direccion: enorme, cp: enorme, ciudad: enorme, mensaje: enorme });
+    expect(performance.now() - inicio).toBeLessThan(50);
+    expect(Object.keys(r.ok ? {} : r.errores).sort()).toEqual(["ciudad", "cp", "direccion", "mensaje", "nombre", "telefono"]);
+  });
+});
+
+describe("entregaDelPedido", () => {
+  const pedido = {
+    envioNombre: "Marta López", envioTelefono: "612345678", envioDireccion: "Carrer de Gràcia 12",
+    envioCp: "08208", envioCiudad: "Sabadell", mensajeTarjeta: null,
+  };
+  it("lee la entrega de un pedido", () => {
+    expect(entregaDelPedido(pedido)).toEqual({
+      nombre: "Marta López", telefono: "612345678", direccion: "Carrer de Gràcia 12", cp: "08208", ciudad: "Sabadell", mensaje: null,
+    });
+  });
+  it("devuelve null en los pedidos de antes de los envios (sin entrega)", () => {
+    expect(entregaDelPedido({
+      envioNombre: null, envioTelefono: null, envioDireccion: null, envioCp: null, envioCiudad: null, mensajeTarjeta: null,
+    })).toBeNull();
   });
 });
