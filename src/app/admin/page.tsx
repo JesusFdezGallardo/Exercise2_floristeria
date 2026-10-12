@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BadgeEstado } from "@/components/badge-estado";
+import { NavegacionAdmin } from "@/components/navegacion-admin";
 import { SinAcceso } from "@/components/sin-acceso";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { EstadoPedido } from "@/generated/prisma/enums";
@@ -39,7 +40,8 @@ export default async function PanelPedidos({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
+      <NavegacionAdmin activa="pedidos" />
+      <h1 className="mt-6 text-3xl font-bold tracking-tight">Pedidos</h1>
 
       <div className="mt-6 flex flex-wrap gap-2 text-sm">
         <Link href="/admin" className={`rounded-full border px-3 py-1 ${!filtro ? "bg-primary text-primary-foreground" : ""}`}>
