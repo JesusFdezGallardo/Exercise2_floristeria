@@ -55,3 +55,19 @@ export function plantillaConfirmacion(p: PedidoEmail): string {
     <p style="color:#737373;font-size:12px">Tienda ficticia (material de clase). Pago en modo test: no se ha cobrado nada.</p>
   </div>`;
 }
+
+// Aviso de reposicion: el producto vuelve a estar disponible. El nombre del cliente lo escribio el al registrarse: se escapa
+export type DatosAviso = { nombreCliente: string; nombreProducto: string; precio: number; url: string };
+
+export function plantillaAvisoReposicion(d: DatosAviso): string {
+  return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1F2A22">
+    <h1 style="font-size:22px;color:#3F6B4A">Ya ha vuelto: ${escaparHtml(d.nombreProducto)}</h1>
+    <p>Hola, ${escaparHtml(d.nombreCliente)}. Nos pediste que te avisáramos y ya tenemos otra vez
+      <strong>${escaparHtml(d.nombreProducto)}</strong> (${formatearPrecio(d.precio)}).</p>
+    <p style="margin:24px 0">
+      <a href="${escaparHtml(d.url)}" style="background:#3F6B4A;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Ver el producto</a>
+    </p>
+    <p style="color:#737373;font-size:12px">Te avisamos una sola vez; puedes ver tus avisos en tu cuenta de ${TIENDA.nombre}.<br>
+      Tienda ficticia (material de clase).</p>
+  </div>`;
+}

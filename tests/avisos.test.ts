@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   debeAvisarAlGuardar, enLotes, puedePedirAviso, SIN_AVISOS, textoAvisosPendientes, textoResultadoAvisos,
 } from "../src/lib/avisos";
+import { formatearPrecio } from "../src/lib/formato";
+import { plantillaAvisoReposicion } from "../src/lib/plantilla-email";
 
 describe("puedePedirAviso", () => {
   it("solo en productos visibles y agotados (tambien con stock negativo)", () => {
@@ -69,5 +71,28 @@ describe("textoAvisosPendientes", () => {
     expect(textoAvisosPendientes(0)).toBe("");
     expect(textoAvisosPendientes(1)).toBe("1 aviso pendiente");
     expect(textoAvisosPendientes(3)).toBe("3 avisos pendientes");
+  });
+});
+
+describe("plantillaAvisoReposicion", () => {
+  const datos = {
+    nombreCliente: "Ana <b>",
+    nombreProducto: "Centro de margaritas & lavanda",
+    precio: 2900,
+    url: "https://ejemplo.test/producto/10",
+  };
+  it("lleva el enlace a la ficha y el precio formateado", () => {
+    const html = plantillaAvisoReposicion(datos);
+    expect(html).toContain('href="https://ejemplo.test/producto/10"');
+    expect(html).toContain(formatearPrecio(2900));
+  });
+  it("escapa los nombres", () => {
+    const html = plantillaAvisoReposicion(datos);
+    expect(html).toContain("Ana &lt;b&gt;");
+    expect(html).not.toContain("Ana <b>");
+    expect(html).toContain("Centro de margaritas &amp; lavanda");
+  });
+  it("dice que se avisa una sola vez", () => {
+    expect(plantillaAvisoReposicion(datos)).toContain("Te avisamos una sola vez");
   });
 });
