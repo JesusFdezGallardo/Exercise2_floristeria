@@ -9,6 +9,7 @@ import { FormularioProducto } from "@/components/formulario-producto";
 import { FormularioReponer } from "@/components/formulario-reponer";
 import { SinAcceso } from "@/components/sin-acceso";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { textoAvisosPendientes } from "@/lib/avisos";
 import { listarCategorias } from "@/lib/catalogo";
 import { prisma } from "@/lib/prisma";
 import { precioParaEditar } from "@/lib/productos-admin";
@@ -29,7 +30,11 @@ export default async function FichaProductoAdmin({ params }: Props) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
   // Sin filtrar por visible: los ocultos tambien se editan (si no, no habria forma de volver a mostrarlos)
-  const [producto, categorias] = await Promise.all([prisma.producto.findUnique({ where: { id } }), listarCategorias()]);
+  const [producto, categorias, avisosPendientes] = await Promise.all([
+    prisma.producto.findUnique({ where: { id } }),
+    listarCategorias(),
+    prisma.avisoReposicion.count({ where: { productoId: id, enviadoEn: null } }),
+  ]);
   if (!producto) notFound();
 
   return (
@@ -41,6 +46,9 @@ export default async function FichaProductoAdmin({ params }: Props) {
           <h1 className="text-2xl font-bold tracking-tight">{producto.nombre}</h1>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <BadgeProducto stock={producto.stock} visible={producto.visible} />
+            {avisosPendientes > 0 && (
+              <span className="text-muted-foreground">{textoAvisosPendientes(avisosPendientes)}</span>
+            )}
             {producto.visible && (
               <Link href={`/producto/${producto.id}`} className="text-muted-foreground underline underline-offset-4">
                 Ver en la tienda
