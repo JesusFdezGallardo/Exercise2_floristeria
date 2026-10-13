@@ -86,14 +86,17 @@ model AvisoReposicion {
 
 **Quién lo llama** (`src/app/admin/productos/actions.ts`), y el resultado se añade al mensaje con
 `textoResultadoAvisos`:
-- `reponerStock` y `corregirStock`: como hasta ahora, cuando `esReposicion(antes, despues)`.
+- `reponerStock` y `corregirStock`: siempre que el stock queda en positivo.
   Ejemplo: "Stock: 0 → 5 · avisados 3 clientes".
-- `guardarProducto`, **nuevo**: lee antes `visible` y `stock`; si `debeAvisarAlGuardar`, llama a `alReponer`.
+- `guardarProducto`, **nuevo**: siempre que el producto queda visible.
   Ejemplo: "Guardado · avisados 3 clientes".
+- (Cambio tras la revisión final: antes solo al pasar de agotado a disponible o de oculto a visible. Así un aviso
+  que falló, o que se pidió justo mientras se reponía, sale en la siguiente operación en vez de quedarse varado.
+  Sin pendientes cuesta una consulta. El aviso de "oculto" solo sale si hay alguien esperando, y si `alReponer`
+  lanza, el admin lee "no se pudieron enviar los avisos" con el stock ya guardado.)
 - El `origen` sale de `(await headers()).get("origin") ?? "http://localhost:3000"`, igual que en `crearCheckout`.
 
-`alReponer` pasa a significar "el producto vuelve a poder comprarse" (vuelve a tener stock, o vuelve a ser visible con
-stock). Sigue siendo el único punto que lo sabe.
+`alReponer` es el único punto que envía avisos.
 
 ## Email (`src/lib/email.ts` y `src/lib/plantilla-email.ts`)
 

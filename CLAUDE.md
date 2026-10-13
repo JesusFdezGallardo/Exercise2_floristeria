@@ -59,13 +59,13 @@ Tienda Volta del curso. Está desplegada en https://exercise2-floristeria.vercel
 - **Admin de productos** (`/admin/productos`): edita datos y stock; no crea ni borra (se oculta con
   `Producto.visible`). Los ocultos se filtran en `whereDe` (`src/lib/catalogo-where.ts`), la ficha y `crearCheckout`;
   el webhook no filtra. El stock solo cambia en `reponerStock` (increment), `corregirStock` (solo si sigue siendo el
-  `stockLeido` del formulario), el webhook y el seed. `alReponer` (`src/lib/reposicion.ts`) es el único punto que sabe
-  que un producto vuelve a poder comprarse (lo llaman reponer, corregir y `guardarProducto` al pasar de oculto a
-  visible con stock).
+  `stockLeido` del formulario), el webhook y el seed. `alReponer` (`src/lib/reposicion.ts`) es el único punto que envía
+  los avisos de reposición: lo llaman reponer y corregir siempre que el stock queda en positivo, y `guardarProducto`
+  siempre que el producto queda visible (no solo al pasar de agotado a disponible, para reintentar los que fallaron).
 - **Avisos de reposición** (`AvisoReposicion`): solo clientes con cuenta, desde la ficha de un producto agotado; se ven
   en `/cuenta/avisos`. Cada aviso se envía **una vez** (`enviadoEn`). `alReponer` los reserva con un único
   `UPDATE ... RETURNING` (sin envíos dobles), los manda por lotes de 100 con `resend.batch.send` y devuelve a pendiente
-  los de un lote que falle o si no hay `RESEND_API_KEY`. No avisa de productos ocultos (el enlace daría 404).
+  los que no salieron, pase lo que pase (`enviarEnLotes`, con `try/finally`). No avisa de productos ocultos (el enlace daría 404).
   Reglas puras en `src/lib/avisos.ts`.
 - **Búsqueda sin tildes:** el catálogo busca en `Producto.nombreBusqueda` (nombre en minúsculas y sin tildes, con
   `normalizar()` y `escaparLike()` de `src/lib/busqueda.ts`). Quien cree o renombre productos tiene que rellenarla;

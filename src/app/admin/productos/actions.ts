@@ -2,15 +2,15 @@
 // Server Actions del admin de productos. OJO: una Server Action es un endpoint publico (cualquiera puede llamarla),
 // asi que CADA accion vuelve a comprobar el rol en la BD con exigirAdmin() y valida todo lo que llega.
 // El stock solo cambia aqui (reponer y corregir), en el webhook de Stripe (descuenta al pagar) y en el seed.
-// Las tres acciones llaman a alReponer cuando un producto vuelve a poder comprarse (envia los avisos de reposicion).
+// Las tres acciones llaman a alReponer cuando el producto se puede comprar (envia los avisos de reposicion pendientes).
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { Prisma } from "@/generated/prisma/client";
-import { debeAvisarAlGuardar, SIN_AVISOS, textoResultadoAvisos } from "@/lib/avisos";
+import { SIN_AVISOS, textoResultadoAvisos, type ResultadoAvisos } from "@/lib/avisos";
 import { normalizar } from "@/lib/busqueda";
 import { prisma } from "@/lib/prisma";
 import {
-  esReposicion, leerUnidades, LIMITES_CORREGIR, LIMITES_REPONER, precioParaEditar, validarProducto, type ErroresProducto,
+  leerUnidades, LIMITES_CORREGIR, LIMITES_REPONER, precioParaEditar, validarProducto, type ErroresProducto,
 } from "@/lib/productos-admin";
 import { alReponer } from "@/lib/reposicion";
 import { exigirAdmin } from "@/lib/sesion";
@@ -39,9 +39,17 @@ function refrescar(id: number) {
   revalidatePath("/");
 }
 
-// Para los enlaces absolutos de los emails de aviso (como en crearCheckout)
-async function origen() {
-  return (await headers()).get("origin") ?? "http://localhost:3000";
+// Envia los avisos pendientes del producto. Un fallo aqui (p. ej. la BD) no puede tapar que el stock o los datos
+// ya se guardaron: se avisa al admin y los avisos siguen pendientes para la siguiente operacion.
+async function avisar(id: number): Promise<ResultadoAvisos> {
+  try {
+    // El origen, para los enlaces absolutos de los emails (como en crearCheckout)
+    const origen = (await headers()).get("origin") ?? "http://localhost:3000";
+    return await alReponer(id, origen);
+  } catch (e) {
+    console.error(`[reposicion] no se pudieron enviar los avisos del producto ${id}:`, e);
+    return { ...SIN_AVISOS, error: true };
+  }
 }
 
 export async function guardarProducto(_: EstadoDatos, datos: FormData): Promise<EstadoDatos> {
@@ -63,10 +71,6 @@ export async function guardarProducto(_: EstadoDatos, datos: FormData): Promise<
   const categoria = await prisma.categoria.findUnique({ where: { id: r.datos.categoriaId } });
   if (!categoria) return { errores: { categoriaId: "Elige una categoría de la lista" }, valores };
 
-  // Como estaba antes: si pasa de oculto a visible con stock, hay que enviar los avisos que esperaban
-  const antes = await prisma.producto.findUnique({ where: { id }, select: { visible: true, stock: true } });
-  if (!antes) return { error: NO_EXISTE, valores };
-
   // El stock NO se toca aqui. nombreBusqueda se recalcula: si no, el producto renombrado no saldria en la busqueda
   const { count } = await prisma.producto.updateMany({
     where: { id },
@@ -74,10 +78,8 @@ export async function guardarProducto(_: EstadoDatos, datos: FormData): Promise<
   });
   if (count === 0) return { error: NO_EXISTE, valores };
 
-  // alReponer vuelve a leer el stock: si se vendio entre medias, no avisa
-  const avisos = debeAvisarAlGuardar(antes, { visible: r.datos.visible, stock: antes.stock })
-    ? await alReponer(id, await origen())
-    : SIN_AVISOS;
+  // Visible: puede haber avisos esperando (se oculto con gente apuntada). alReponer mira el stock por su cuenta
+  const avisos = r.datos.visible ? await avisar(id) : SIN_AVISOS;
   refrescar(id);
   const { nombre, descripcion, precio, categoriaId, visible } = r.datos;
   return {
@@ -111,7 +113,7 @@ export async function reponerStock(_: EstadoStock, datos: FormData): Promise<Est
   }
 
   const antes = nuevo - unidades;
-  const avisos = esReposicion(antes, nuevo) ? await alReponer(id, await origen()) : SIN_AVISOS;
+  const avisos = nuevo > 0 ? await avisar(id) : SIN_AVISOS;
   refrescar(id);
   return { ok: `Stock: ${antes} → ${nuevo}${textoResultadoAvisos(avisos)}` };
 }
@@ -119,7 +121,7 @@ export async function reponerStock(_: EstadoStock, datos: FormData): Promise<Est
 export async function corregirStock(_: EstadoStock, datos: FormData): Promise<EstadoStock> {
   if (!(await exigirAdmin())) return { error: NO_AUTORIZADO };
   const id = leerId(datos);
-  // stockLeido = el stock que tenia la pagina al pintarse. Puede ser negativo (ver esReposicion)
+  // stockLeido = el stock que tenia la pagina al pintarse. Puede ser negativo (sin reserva de stock)
   const leido = Number(texto(datos, "stockLeido"));
   if (!id || texto(datos, "stockLeido") === "" || !Number.isInteger(leido)) return { error: NO_EXISTE };
   const nuevo = leerUnidades(datos.get("stock"), LIMITES_CORREGIR);
@@ -136,7 +138,7 @@ export async function corregirStock(_: EstadoStock, datos: FormData): Promise<Es
     return { error: `El stock ha cambiado mientras editabas: ahora hay ${actual.stock}. Revisa el recuento y guarda otra vez.` };
   }
 
-  const avisos = esReposicion(leido, nuevo) ? await alReponer(id, await origen()) : SIN_AVISOS;
+  const avisos = nuevo > 0 ? await avisar(id) : SIN_AVISOS;
   refrescar(id);
   return { ok: `Stock: ${leido} → ${nuevo}${textoResultadoAvisos(avisos)}` };
 }

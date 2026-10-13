@@ -1,7 +1,7 @@
 // Reglas de los avisos de reposicion: quien puede pedirlos, cuando se envian al guardar, lotes y textos. Sin BD.
 import { describe, expect, it } from "vitest";
 import {
-  debeAvisarAlGuardar, enLotes, puedePedirAviso, SIN_AVISOS, textoAvisosPendientes, textoResultadoAvisos,
+  enLotes, enviarEnLotes, puedePedirAviso, SIN_AVISOS, textoAvisosPendientes, textoResultadoAvisos,
 } from "../src/lib/avisos";
 import { formatearPrecio } from "../src/lib/formato";
 import { plantillaAvisoReposicion } from "../src/lib/plantilla-email";
@@ -15,16 +15,33 @@ describe("puedePedirAviso", () => {
   });
 });
 
-describe("debeAvisarAlGuardar", () => {
-  it("avisa cuando un producto oculto pasa a visible con stock", () => {
-    expect(debeAvisarAlGuardar({ visible: false }, { visible: true, stock: 2 })).toBe(true);
+describe("enviarEnLotes: nunca deja un aviso reservado sin enviar", () => {
+  const reservados = (n: number) => Array.from({ length: n }, (_, i) => ({ id: i + 1 }));
+
+  it("si todos los lotes salen, no devuelve nada a pendientes", async () => {
+    const devueltos: number[] = [];
+    const r = await enviarEnLotes(reservados(150), async () => true, async (ids) => { devueltos.push(...ids); });
+    expect(r).toEqual({ avisados: 150, fallidos: 0 });
+    expect(devueltos).toEqual([]);
   });
-  it("no avisa en los demas casos", () => {
-    expect(debeAvisarAlGuardar({ visible: false }, { visible: true, stock: 0 })).toBe(false);
-    expect(debeAvisarAlGuardar({ visible: false }, { visible: true, stock: -1 })).toBe(false);
-    expect(debeAvisarAlGuardar({ visible: true }, { visible: true, stock: 5 })).toBe(false);
-    expect(debeAvisarAlGuardar({ visible: true }, { visible: false, stock: 5 })).toBe(false);
-    expect(debeAvisarAlGuardar({ visible: false }, { visible: false, stock: 5 })).toBe(false);
+
+  it("devuelve a pendientes los avisos del lote que falla", async () => {
+    const devueltos: number[] = [];
+    let llamada = 0;
+    const r = await enviarEnLotes(reservados(150), async () => ++llamada === 1, async (ids) => { devueltos.push(...ids); });
+    expect(r).toEqual({ avisados: 100, fallidos: 50 });
+    expect(devueltos).toEqual(reservados(150).slice(100).map((a) => a.id));
+  });
+
+  it("si enviar lanza una excepcion, cuenta el lote como fallido y lo devuelve, sin lanzar", async () => {
+    const devueltos: number[] = [];
+    const r = await enviarEnLotes(
+      reservados(3),
+      async () => { throw new Error("se corto la conexion"); },
+      async (ids) => { devueltos.push(...ids); },
+    );
+    expect(r).toEqual({ avisados: 0, fallidos: 3 });
+    expect(devueltos).toEqual([1, 2, 3]);
   });
 });
 
@@ -59,6 +76,10 @@ describe("textoResultadoAvisos", () => {
       .toBe(" · no se pudo avisar a 1 cliente (se reintentará al reponer)");
     expect(textoResultadoAvisos({ avisados: 0, fallidos: 2, oculto: false }))
       .toBe(" · no se pudo avisar a 2 clientes (se reintentará al reponer)");
+  });
+  it("error al enviar (no se sabe a cuantos)", () => {
+    expect(textoResultadoAvisos({ ...SIN_AVISOS, error: true }))
+      .toBe(" · no se pudieron enviar los avisos (se reintentará al reponer)");
   });
   it("avisados y fallidos a la vez", () => {
     expect(textoResultadoAvisos({ avisados: 100, fallidos: 20, oculto: false }))
