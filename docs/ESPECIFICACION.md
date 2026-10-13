@@ -26,7 +26,7 @@ cada uno en una sola categoría y con precio por unidad. Los datos están en `pr
 | `/checkout/exito` y `/checkout/cancelado` | Vuelta desde Stripe (solo informan) | Cliente |
 | `/entrar` y `/registro` | Entrar o crear una cuenta | Cliente |
 | `/cuenta/pedidos` y `/cuenta/pedidos/[id]` | Mis pedidos: lista y detalle | Cliente con sesión |
-| `/admin` | Panel de pedidos: lista (cada fila abre su pedido), detalle y cambio de estado | Floristería (cuenta con rol ADMIN) |
+| `/admin` y `/admin/productos` | Panel de pedidos (lista, detalle y cambio de estado) y de productos (datos, visibilidad, reponer y corregir stock) | Floristería (cuenta con rol ADMIN) |
 | `/api/webhooks/stripe` | Endpoint que recibe los eventos de Stripe (no es una página) | Stripe |
 | Cualquier otra ruta | 404 "No encontramos esa página"; un producto inexistente tiene su propia 404 | Cliente |
 

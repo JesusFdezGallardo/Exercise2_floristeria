@@ -1,11 +1,12 @@
 "use client";
 // Formulario de entrega de /checkout/envio. El envio que se ve aqui es una VISTA PREVIA con los precios del carrito:
 // el que se cobra lo recalcula crearCheckout con los de la BD. Al pagar manda ids, cantidades y la entrega (no precios).
-import { useState, useTransition, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { crearCheckout } from "@/app/checkout/actions";
+import { Campo } from "@/components/campo-formulario";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -124,17 +125,5 @@ export function FormularioEnvio() {
         <p className="text-xs text-muted-foreground">Pago seguro con Stripe (modo test: no se cobra nada)</p>
       </aside>
     </form>
-  );
-}
-
-// Etiqueta + campo + ayuda o error debajo
-function Campo({ etiqueta, error, ayuda, children }: { etiqueta: string; error?: string; ayuda?: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium">
-      {etiqueta}
-      {children}
-      {error ? <span className="font-normal text-destructive">{error}</span>
-        : ayuda && <span className="font-normal text-muted-foreground">{ayuda}</span>}
-    </label>
   );
 }

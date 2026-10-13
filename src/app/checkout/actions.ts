@@ -5,7 +5,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { calcularEnvio, validarEntrega, type CampoEntrega, type ErroresEntrega } from "@/lib/envio";
-import { prepararPago, subtotalDe } from "@/lib/pago";
+import { lineasDelCarrito, prepararPago, subtotalDe } from "@/lib/pago";
 import { prisma } from "@/lib/prisma";
 import { usuarioActual } from "@/lib/sesion";
 import { stripe } from "@/lib/stripe";
@@ -32,15 +32,11 @@ export async function crearCheckout(
   );
   if (limpios.length === 0) return { error: "El carrito está vacío" };
 
-  // 3. Precios y stock de VERDAD, desde la base de datos
+  // 3. Precios y stock de VERDAD, desde la base de datos. Un producto oculto desde el admin ya no se vende
   const productos = await prisma.producto.findMany({ where: { id: { in: limpios.map((a) => a.id) } } });
-  const lineas = [];
-  for (const a of limpios) {
-    const p = productos.find((x) => x.id === a.id);
-    if (!p) return { error: "Un producto del carrito ya no existe" };
-    if (p.stock < a.cantidad) return { error: `Solo quedan ${p.stock} unidades de ${p.nombre}` };
-    lineas.push({ producto: p, cantidad: a.cantidad });
-  }
+  const comprobadas = lineasDelCarrito(limpios, productos);
+  if (!comprobadas.ok) return { error: comprobadas.error };
+  const { lineas } = comprobadas;
   const lineasPago = lineas.map((l) => ({ nombre: l.producto.nombre, precio: l.producto.precio, cantidad: l.cantidad }));
 
   // 4. El envio con el subtotal REAL (el de la BD): el envio gratis no se decide con los precios del navegador

@@ -72,6 +72,14 @@ No llega ningún evento: el pedido sigue PENDIENTE y el stock no se toca. Si el 
   negativo. Está asumido (la especificación deja la gestión de stock en tiempo real fuera de alcance).
 - Un pedido CANCELADO no repone stock porque nunca se le descontó. Si algún día se permite cancelar pedidos PAGADOS,
   habrá que reponerlo.
+- Desde el admin (`/admin/productos/<id>`) el stock cambia de dos formas, cada una con su Server Action en
+  `src/app/admin/productos/actions.ts`:
+  - **Reponer** suma N con `increment`: es atómico en la BD y no pisa una venta que el webhook descuente a la vez.
+  - **Corregir** fija N con `updateMany({ where: { id, stock: stockLeido } })`, donde `stockLeido` es el stock que
+    tenía la página al pintarse (va en un campo oculto). Si entretanto cambió, no se guarda nada y se avisa con el
+    valor nuevo. No hace falta una columna de versión: el propio stock hace de testigo.
+- Cuando cualquiera de las dos deja un producto que estaba en 0 (o en negativo) con stock, llama a `alReponer`
+  (`src/lib/reposicion.ts`). Es el gancho de los avisos de reposición; hoy solo escribe una línea en el log.
 
 ### Precios
 Siempre en **céntimos** (`Int`): en la base de datos, en el carrito y en Stripe (`unit_amount`). Solo se convierten a
@@ -118,8 +126,8 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 - PostgreSQL, con `ILIKE`, trata "i" e "í" como letras distintas. Por eso cada producto guarda su nombre ya
   normalizado (minúsculas, sin tildes, diéresis ni virgulillas) en la columna **`nombreBusqueda`**, y el catálogo
   busca ahí con lo que escribe el cliente normalizado igual (`normalizar()` en `src/lib/busqueda.ts`).
-- **Hay que mantenerla sincronizada:** hoy solo el seed crea productos y la rellena. Si algún día se crean o se
-  renombran productos desde otro sitio (por ejemplo, un admin de productos), ese código tiene que guardar también
+- **Hay que mantenerla sincronizada:** la rellenan el seed y `guardarProducto` (el admin de productos, al renombrar).
+  Si algún día se crean productos desde otro sitio, ese código tiene que guardar también
   `nombreBusqueda: normalizar(nombre)`, o el producto no saldrá en las búsquedas.
 - La migración `20261011120000_busqueda_sin_tildes` rellenó las filas que ya existían con `translate()` en SQL, sin
   volver a sembrar (así se conservaron los pedidos). `tests/busqueda.test.ts` comprueba que esa tabla de letras da
@@ -201,6 +209,15 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 - **Toda la fila de la lista abre el pedido** (`src/app/admin/page.tsx`): el enlace del número lleva un `::after`
   absoluto que se estira sobre la fila (`relative`), sin JavaScript en el navegador. Si añades un botón o un enlace
   dentro de una fila, el `::after` lo taparía: dale `relative z-10` para que quede por encima.
+- **Productos** (`/admin/productos`): lista con los agotados arriba y ficha con tres formularios (datos, reponer y
+  corregir stock). No se crean ni se borran productos desde la web: uno nuevo entra por `prisma/catalogo-datos.ts`
+  con su SVG. "Borrar" es **ocultar** (`Producto.visible = false`), porque los pedidos antiguos apuntan al producto.
+- Un producto oculto se filtra en tres sitios: `whereDe` (`src/lib/catalogo-where.ts`, catálogo y búsqueda), la ficha
+  pública (`findFirst` con `visible: true`, da 404) y `crearCheckout` (no se puede pagar aunque siga en un carrito: `lineasDelCarrito` de `src/lib/pago.ts` devuelve
+  "<nombre> ya no está disponible: quítalo del carrito", para que el cliente sepa qué línea quitar).
+  El webhook no filtra: lo que se pagó antes de ocultarlo se cobra y descuenta stock igual. Un sitio nuevo que liste
+  productos para la tienda tiene que filtrar también.
+- El slug y la imagen no se editan: renombrar un producto no cambia su URL ni su ilustración.
 
 ---
 

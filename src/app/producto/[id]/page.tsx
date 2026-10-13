@@ -14,7 +14,8 @@ type Props = { params: Promise<{ id: string }> };
 async function cargarProducto(idTexto: string) {
   const id = Number(idTexto);
   if (!Number.isInteger(id) || id <= 0) return null; // /producto/abc -> 404 sin tocar la base
-  return prisma.producto.findUnique({ where: { id }, include: { categoria: true } });
+  // Un producto oculto desde el admin no existe para la tienda: 404 igual que uno borrado
+  return prisma.producto.findFirst({ where: { id, visible: true }, include: { categoria: true } });
 }
 
 // El titulo de la pestana del navegador sale del propio producto

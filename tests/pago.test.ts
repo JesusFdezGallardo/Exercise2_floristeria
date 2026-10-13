@@ -1,6 +1,6 @@
 // Lo que se manda a Stripe y el total del pedido: tienen que cuadrar (Stripe cobra lineas + envio).
 import { describe, expect, it } from "vitest";
-import { prepararPago, subtotalDe } from "../src/lib/pago";
+import { lineasDelCarrito, prepararPago, subtotalDe } from "../src/lib/pago";
 
 const lineas = [
   { nombre: "Ramo de rosas", precio: 3490, cantidad: 2 },
@@ -34,5 +34,25 @@ describe("prepararPago", () => {
     const lineasStripe = lineItems.reduce((t, l) => t + (l.price_data?.unit_amount ?? 0) * (l.quantity ?? 0), 0);
     const envioStripe = shippingOptions[0].shipping_rate_data?.fixed_amount?.amount ?? 0;
     expect(lineasStripe + envioStripe).toBe(total);
+  });
+});
+
+describe("lineasDelCarrito: lo que pide el carrito contra lo que dice la BD", () => {
+  const rosas = { id: 1, nombre: "Ramo de rosas", precio: 4500, stock: 5, visible: true };
+  const lirios = { id: 2, nombre: "Centro de lirios", precio: 6500, stock: 3, visible: false };
+
+  it("con todo disponible, une cada articulo con su producto", () => {
+    expect(lineasDelCarrito([{ id: 1, cantidad: 2 }], [rosas])).toEqual({ ok: true, lineas: [{ producto: rosas, cantidad: 2 }] });
+  });
+  it("un producto oculto desde el admin dice CUAL es, para que el cliente sepa que quitar", () => {
+    expect(lineasDelCarrito([{ id: 1, cantidad: 1 }, { id: 2, cantidad: 1 }], [rosas, lirios])).toEqual({
+      ok: false, error: "Centro de lirios ya no está disponible: quítalo del carrito",
+    });
+  });
+  it("un producto que ya no existe", () => {
+    expect(lineasDelCarrito([{ id: 9, cantidad: 1 }], [rosas])).toEqual({ ok: false, error: "Un producto del carrito ya no existe" });
+  });
+  it("sin stock suficiente", () => {
+    expect(lineasDelCarrito([{ id: 1, cantidad: 6 }], [rosas])).toEqual({ ok: false, error: "Solo quedan 5 unidades de Ramo de rosas" });
   });
 });
