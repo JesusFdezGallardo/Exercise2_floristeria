@@ -1,5 +1,5 @@
 "use client";
-// Menu del usuario en la cabecera: inicial, "Mis pedidos", "Panel de admin" (solo admins) y "Salir".
+// Menu del usuario en la cabecera: inicial, "Mis pedidos", "Mis avisos", "Panel de admin" (solo admins) y "Salir".
 // Es un <details> nativo; el cliente solo hace falta para cerrarlo al navegar.
 import { useEffect, useRef } from "react";
 import Link from "next/link";
@@ -25,6 +25,7 @@ export function MenuCuenta({ nombre, esAdmin }: { nombre: string; esAdmin: boole
       </summary>
       <div className="absolute right-0 z-20 mt-2 flex w-48 flex-col rounded-lg border bg-background p-1 shadow-md">
         <Link href="/cuenta/pedidos" className={opcion}>Mis pedidos</Link>
+        <Link href="/cuenta/avisos" className={opcion}>Mis avisos</Link>
         {esAdmin && <Link href="/admin" className={opcion}>Panel de admin</Link>}
         <form action={salir}>
           <button type="submit" className={`w-full ${opcion}`}>Salir</button>
