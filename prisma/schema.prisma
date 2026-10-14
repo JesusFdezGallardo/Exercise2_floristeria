@@ -31,9 +31,10 @@ model Producto {
   visible        Boolean  @default(true) // false = oculto: fuera del catalogo y de la compra; los pedidos antiguos lo siguen viendo
   creadoEn       DateTime @default(now())
 
-  categoria   Categoria     @relation(fields: [categoriaId], references: [id])
+  categoria   Categoria         @relation(fields: [categoriaId], references: [id])
   categoriaId Int
   lineas      LineaPedido[]
+  avisos      AvisoReposicion[]
 
   @@index([categoriaId])
 }
@@ -54,14 +55,15 @@ enum Rol {
 
 // Cuenta de cliente. El email hace de nombre de usuario.
 model Usuario {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique // en minusculas
+  id         Int               @id @default(autoincrement())
+  email      String            @unique // en minusculas
   nombre     String
   contrasena String // hash scrypt "sal:hash" en hexadecimal (src/lib/contrasenas.ts), nunca la contraseña
-  rol        Rol      @default(CLIENTE)
-  creadoEn   DateTime @default(now())
+  rol        Rol               @default(CLIENTE)
+  creadoEn   DateTime          @default(now())
   pedidos    Pedido[]
   sesiones   Sesion[]
+  avisos     AvisoReposicion[]
 }
 
 // Una sesion abierta. El id es el SHA-256 del token de la cookie: quien lea la BD no puede fabricar cookies validas.
@@ -112,4 +114,20 @@ model LineaPedido {
   productoId Int
 
   @@index([pedidoId])
+}
+
+// "Avisame cuando vuelva": un cliente con cuenta pide que le avisen cuando un producto agotado vuelva a tener stock.
+// Una fila como mucho por cliente y producto; volver a pedirlo reutiliza la fila (enviadoEn vuelve a null).
+// Lo envia alReponer (src/lib/reposicion.ts), una sola vez.
+model AvisoReposicion {
+  id         Int       @id @default(autoincrement())
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId  Int
+  producto   Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  productoId Int
+  creadoEn   DateTime  @default(now())
+  enviadoEn  DateTime? // null = pendiente; con fecha = ya se aviso (una sola vez)
+
+  @@unique([usuarioId, productoId])
+  @@index([productoId, enviadoEn])
 }

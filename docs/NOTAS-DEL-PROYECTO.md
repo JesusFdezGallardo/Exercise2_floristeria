@@ -78,8 +78,8 @@ No llega ningún evento: el pedido sigue PENDIENTE y el stock no se toca. Si el 
   - **Corregir** fija N con `updateMany({ where: { id, stock: stockLeido } })`, donde `stockLeido` es el stock que
     tenía la página al pintarse (va en un campo oculto). Si entretanto cambió, no se guarda nada y se avisa con el
     valor nuevo. No hace falta una columna de versión: el propio stock hace de testigo.
-- Cuando cualquiera de las dos deja un producto que estaba en 0 (o en negativo) con stock, llama a `alReponer`
-  (`src/lib/reposicion.ts`). Es el gancho de los avisos de reposición; hoy solo escribe una línea en el log.
+- Cuando cualquiera de las dos deja el stock en positivo, llama a `alReponer` (`src/lib/reposicion.ts`), que envía
+  los avisos de reposición pendientes (ver "Avisos de reposición").
 
 ### Precios
 Siempre en **céntimos** (`Int`): en la base de datos, en el carrito y en Stripe (`unit_amount`). Solo se convierten a
@@ -218,8 +218,35 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
   El webhook no filtra: lo que se pagó antes de ocultarlo se cobra y descuenta stock igual. Un sitio nuevo que liste
   productos para la tienda tiene que filtrar también.
 - El slug y la imagen no se editan: renombrar un producto no cambia su URL ni su ilustración.
+- Junto al stock se ve cuántos avisos de reposición están pendientes (ver "Avisos de reposición").
 
 ---
+
+## Avisos de reposición
+
+- Un cliente **con cuenta** pulsa "Avísame cuando vuelva" en la ficha de un producto agotado (`stock <= 0`). Sin
+  sesión, el botón lleva a `/entrar` y vuelve a la ficha. Las acciones (`pedirAviso`, `quitarAviso`) están en
+  `src/app/producto/[id]/actions.ts` y rechazan productos ocultos o con stock aunque se llamen a mano.
+- Tabla `AvisoReposicion`: una fila como mucho por cliente y producto (`@@unique`). `enviadoEn` nulo = pendiente.
+  Volver a pedir un aviso ya enviado reutiliza la fila (`upsert` que pone `enviadoEn = null`).
+- **Se envía una sola vez**, desde `alReponer` (`src/lib/reposicion.ts`). Lo llaman reponer y corregir siempre que el
+  stock queda en positivo, y `guardarProducto` siempre que el producto queda visible: no solo al pasar de agotado a
+  disponible, para que un aviso que falló (o que se pidió justo mientras se reponía) salga en la siguiente operación.
+  Sin pendientes cuesta una consulta.
+  1. Si el producto está oculto no envía nada (el enlace daría 404); se envía cuando `guardarProducto` lo vuelve a
+     hacer visible con stock. Si falla algo en `alReponer`, el admin lee "no se pudieron enviar los avisos" y el
+     stock queda guardado igual.
+  2. Reserva los pendientes con un único `UPDATE ... SET "enviadoEn" = CURRENT_TIMESTAMP ... RETURNING`. Si dos
+     reposiciones coinciden, cada aviso lo reserva solo una: no hay emails dobles.
+  3. Envía por lotes de 100 (`resend.batch.send`) con `enviarEnLotes` (`src/lib/avisos.ts`): lo que no se confirma
+     (lote rechazado, sin `RESEND_API_KEY` o una excepción a media) vuelve a `enviadoEn = null` en un `finally`, y se
+     reintenta en la siguiente reposición.
+- El enlace del email sale de la cabecera `origin` de la petición del admin (como `crearCheckout`).
+- Sin dominio propio, Resend solo entrega a la dirección de la cuenta (o a `EMAIL_PRUEBAS`): hoy todos los avisos
+  llegan ahí.
+- El admin ve "N avisos pendientes" junto al stock, y el mensaje al reponer dice a cuántos se ha avisado.
+- `/cuenta/avisos` muestra los pendientes (con "Quitar") y los enviados de los últimos 30 días
+  (`DIAS_HISTORIAL_AVISOS`).
 
 ## Base de datos y entorno
 - **Dos URLs de Neon:** `DATABASE_URL` (con pooler, la usa la app) y `DIRECT_URL` (sin pooler, la usan las migraciones,

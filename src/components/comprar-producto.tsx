@@ -12,7 +12,7 @@ type Props = { producto: { id: number; nombre: string; precio: number; imagen: s
 export function ComprarProducto({ producto }: Props) {
   const [cantidad, setCantidad] = useState(1);
   const anadir = useCarrito((s) => s.anadir); // solo la accion: este componente no se repinta al cambiar el carrito
-  const agotado = producto.stock === 0;
+  const agotado = producto.stock <= 0; // sin reserva de stock puede quedar en -1
   const max = Math.min(producto.stock, 10);
 
   function alPulsar() {

@@ -21,11 +21,12 @@ cada uno en una sola categoría y con precio por unidad. Los datos están en `pr
 | Ruta | Página | Quién la usa |
 |---|---|---|
 | `/` | Catálogo: rejilla de productos, búsqueda, filtros (ocasión, precio) y orden | Cliente |
-| `/producto/[id]` | Detalle: ilustración, precio, stock, cantidad, añadir al carrito | Cliente |
+| `/producto/[id]` | Detalle: ilustración, precio, stock, cantidad, añadir al carrito; si está agotado, "Avísame cuando vuelva" | Cliente |
 | `/carrito` | Carrito: líneas, cantidades, total, botón de pagar | Cliente |
 | `/checkout/exito` y `/checkout/cancelado` | Vuelta desde Stripe (solo informan) | Cliente |
 | `/entrar` y `/registro` | Entrar o crear una cuenta | Cliente |
 | `/cuenta/pedidos` y `/cuenta/pedidos/[id]` | Mis pedidos: lista y detalle | Cliente con sesión |
+| `/cuenta/avisos` | Mis avisos de reposición: pendientes (se pueden quitar) y enviados en los últimos 30 días | Cliente con sesión |
 | `/admin` y `/admin/productos` | Panel de pedidos (lista, detalle y cambio de estado) y de productos (datos, visibilidad, reponer y corregir stock) | Floristería (cuenta con rol ADMIN) |
 | `/api/webhooks/stripe` | Endpoint que recibe los eventos de Stripe (no es una página) | Stripe |
 | Cualquier otra ruta | 404 "No encontramos esa página"; un producto inexistente tiene su propia 404 | Cliente |

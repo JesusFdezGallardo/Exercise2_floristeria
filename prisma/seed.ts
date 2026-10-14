@@ -15,7 +15,7 @@ const prisma = new PrismaClient({
 async function main() {
   // Vaciamos las tablas Y reiniciamos los contadores de id (RESTART IDENTITY).
   // Con deleteMany los id seguian creciendo (13, 14...) y los enlaces /producto/1 dejaban de existir.
-  await prisma.$executeRaw`TRUNCATE "LineaPedido", "Pedido", "Sesion", "Usuario", "Producto", "Categoria" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE "AvisoReposicion", "LineaPedido", "Pedido", "Sesion", "Usuario", "Producto", "Categoria" RESTART IDENTITY CASCADE`;
 
   for (const c of CATEGORIAS) {
     await prisma.categoria.create({

@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AvisoReposicion } from "@/components/aviso-reposicion";
 import { ComprarProducto } from "@/components/comprar-producto";
 import { Badge } from "@/components/ui/badge";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 
 // En Next 15 params es una Promise
 type Props = { params: Promise<{ id: string }> };
@@ -28,7 +30,16 @@ export default async function PaginaProducto({ params }: Props) {
   const producto = await cargarProducto((await params).id);
   if (!producto) notFound(); // pinta producto/[id]/not-found.tsx con estado HTTP 404
 
-  const agotado = producto.stock === 0;
+  // <= 0 y no === 0: sin reserva de stock, dos ventas a la vez de la ultima unidad lo dejan en -1
+  const agotado = producto.stock <= 0;
+  // Solo hace falta saber si ya pidio el aviso cuando el producto esta agotado
+  const usuario = agotado ? await usuarioActual() : null;
+  const avisoPendiente = usuario
+    ? await prisma.avisoReposicion.findFirst({
+        where: { usuarioId: usuario.id, productoId: producto.id, enviadoEn: null },
+        select: { id: true },
+      })
+    : null;
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
@@ -53,6 +64,9 @@ export default async function PaginaProducto({ params }: Props) {
           <p className={`text-sm ${agotado ? "text-destructive" : "text-emerald-700"}`}>
             {agotado ? "Agotado" : `En stock: ${producto.stock} unidades`}
           </p>
+          {agotado && (
+            <AvisoReposicion productoId={producto.id} email={usuario?.email ?? null} pendiente={!!avisoPendiente} />
+          )}
           <ComprarProducto
             producto={{ id: producto.id, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen, stock: producto.stock }}
           />

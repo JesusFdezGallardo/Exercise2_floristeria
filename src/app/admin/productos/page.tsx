@@ -7,6 +7,7 @@ import { BadgeProducto } from "@/components/badge-producto";
 import { NavegacionAdmin } from "@/components/navegacion-admin";
 import { SinAcceso } from "@/components/sin-acceso";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { textoAvisosPendientes } from "@/lib/avisos";
 import { formatearPrecio } from "@/lib/formato";
 import { prisma } from "@/lib/prisma";
 import { ordenarParaAdmin } from "@/lib/productos-admin";
@@ -21,9 +22,13 @@ export default async function PanelProductos() {
   if (!usuario) redirect("/entrar?callbackUrl=/admin/productos");
   if (usuario.rol !== "ADMIN") return <SinAcceso />;
 
-  const productos = ordenarParaAdmin(
-    await prisma.producto.findMany({ include: { categoria: { select: { nombre: true } } } }),
-  );
+  const [todos, pendientes] = await Promise.all([
+    prisma.producto.findMany({ include: { categoria: { select: { nombre: true } } } }),
+    // Una sola consulta para toda la lista: cuantos avisos pendientes tiene cada producto
+    prisma.avisoReposicion.groupBy({ by: ["productoId"], where: { enviadoEn: null }, _count: { _all: true } }),
+  ]);
+  const productos = ordenarParaAdmin(todos);
+  const avisosDe = new Map(pendientes.map((p) => [p.productoId, p._count._all]));
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -55,7 +60,14 @@ export default async function PanelProductos() {
               <TableCell className={`text-right tabular-nums ${p.stock <= 0 ? "font-semibold text-destructive" : ""}`}>
                 {p.stock}
               </TableCell>
-              <TableCell><BadgeProducto stock={p.stock} visible={p.visible} /></TableCell>
+              <TableCell>
+                <div className="flex flex-wrap items-center gap-2">
+                  <BadgeProducto stock={p.stock} visible={p.visible} />
+                  {avisosDe.has(p.id) && (
+                    <span className="text-xs text-muted-foreground">{textoAvisosPendientes(avisosDe.get(p.id)!)}</span>
+                  )}
+                </div>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
