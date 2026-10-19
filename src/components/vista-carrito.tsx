@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatearPrecio } from "@/lib/formato";
 import { calcularTotal, contarArticulos, useCarrito } from "@/store/carrito";
 
-const ENTRAR = "/entrar?callbackUrl=%2Fcheckout%2Fenvio";
+// Paso de entrega antes de Stripe; sin sesion, a entrar y de vuelta ahi. Tambien lo usa "Pagar ahora" de la ficha.
+export const rutaPago = (conSesion: boolean) => (conSesion ? "/checkout/envio" : "/entrar?callbackUrl=%2Fcheckout%2Fenvio");
 
 export function VistaCarrito({ conSesion }: { conSesion: boolean }) {
   const { lineas, cambiarCantidad, quitar, vaciar } = useCarrito();
@@ -62,8 +63,7 @@ export function VistaCarrito({ conSesion }: { conSesion: boolean }) {
         </div>
       </div>
       <div className="flex justify-end">
-        {/* Sin sesion, a entrar y de vuelta al paso de entrega */}
-        <Button size="lg" render={<Link href={conSesion ? "/checkout/envio" : ENTRAR} />} nativeButton={false} className="px-8">
+        <Button size="lg" render={<Link href={rutaPago(conSesion)} />} nativeButton={false} className="px-8">
           {conSesion ? "Continuar con el envío" : "Entrar para continuar"}
         </Button>
       </div>

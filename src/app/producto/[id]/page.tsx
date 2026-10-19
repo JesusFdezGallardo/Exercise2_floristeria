@@ -32,9 +32,9 @@ export default async function PaginaProducto({ params }: Props) {
 
   // <= 0 y no === 0: sin reserva de stock, dos ventas a la vez de la ultima unidad lo dejan en -1
   const agotado = producto.stock <= 0;
-  // Solo hace falta saber si ya pidio el aviso cuando el producto esta agotado
-  const usuario = agotado ? await usuarioActual() : null;
-  const avisoPendiente = usuario
+  // La sesion decide adonde lleva "Pagar ahora"; el aviso pendiente solo importa si esta agotado
+  const usuario = await usuarioActual();
+  const avisoPendiente = agotado && usuario
     ? await prisma.avisoReposicion.findFirst({
         where: { usuarioId: usuario.id, productoId: producto.id, enviadoEn: null },
         select: { id: true },
@@ -69,6 +69,7 @@ export default async function PaginaProducto({ params }: Props) {
           )}
           <ComprarProducto
             producto={{ id: producto.id, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen, stock: producto.stock }}
+            conSesion={!!usuario}
           />
         </div>
       </div>
