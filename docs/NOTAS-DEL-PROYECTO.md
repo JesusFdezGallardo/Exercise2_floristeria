@@ -171,6 +171,11 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
   que se pague; Stripe cobrará el nuevo.
 - Si cambias la forma de `LineaCarrito`, los carritos guardados con la forma antigua siguen en el navegador de la gente.
   Para invalidarlos, cambia `CLAVE_CARRITO` (o usa `version` + `migrate` de Zustand).
+- **Botones de la ficha** (`src/components/comprar-producto.tsx`): los dos añaden la cantidad elegida y salen de la
+  ficha. "Añadir al carrito" vuelve al catálogo (`/`, sin los filtros de antes; el aviso se ve igual porque el
+  `Toaster` está en el layout). "Pagar ahora" lleva a pagar **todo el carrito**, no solo ese producto: va a
+  `rutaPago()` (`src/components/vista-carrito.tsx`, la misma del botón del carrito), es decir, al paso de entrega o,
+  sin sesión, a `/entrar` y de vuelta ahí. Por eso la ficha lee la sesión siempre, no solo con el producto agotado.
 
 ---
 
