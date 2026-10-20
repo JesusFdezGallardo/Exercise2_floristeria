@@ -193,8 +193,8 @@ Para ver el SQL que genera Prisma con una búsqueda de ejemplo (rosas, de Amor, 
 - "Email o contraseña incorrectos" sale igual si el email no existe o si la contraseña está mal, y en los dos casos se
   calcula un scrypt: así no se puede averiguar quién tiene cuenta.
 - `destinoSeguro` solo deja volver (`callbackUrl`) a rutas de la tienda.
-- Pagar exige sesión. Sin ella, el botón del carrito lleva a `/entrar?callbackUrl=/carrito`, para que el cliente vea
-  el carrito ya sumado antes de pagar.
+- Pagar exige sesión. Sin ella, el botón del carrito lleva a `/entrar?callbackUrl=/checkout/envio` (`rutaPago()`):
+  al entrar, el carrito anónimo ya se ha sumado y el cliente sigue en el paso de entrega.
 - "Mis pedidos" (`/cuenta/pedidos`) muestra los pedidos con `usuarioId` del usuario. Un pedido ajeno da **404**. Los
   pedidos de antes de las cuentas no tienen dueño y solo los ve el admin.
 - **Tras una migración, reinicia `npm run dev`:** `src/lib/prisma.ts` guarda el cliente en `globalThis` y el servidor
